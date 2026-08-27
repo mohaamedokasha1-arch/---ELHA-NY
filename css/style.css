@@ -739,3 +739,22 @@ ul{list-style:none}
 .prov--inactive:hover{transform:none;box-shadow:none}
 .prov--inactive .btn{filter:grayscale(.9);opacity:.5;cursor:not-allowed}
 .prov--busy::before{background:linear-gradient(90deg,var(--danger),var(--orange))}
+
+/* ===== الدليل المباشر: أزرار التواصل الفوري بالعامل ===== */
+.svc-card{cursor:pointer}
+.svc-card:focus-visible{outline:2px solid var(--gold-2);outline-offset:4px}
+.prov__contact{display:flex;gap:10px;margin-top:auto;padding-top:6px}
+.prov__contact .btn{flex:1;justify-content:center;text-align:center}
+.btn--call{
+  background:linear-gradient(135deg,#7ff0ff,var(--cyan) 60%,#00a7c4);
+  color:#04252b;font-weight:800;
+  box-shadow:0 12px 40px -12px rgba(0,229,255,.45);
+}
+.btn--call:hover{transform:translateY(-3px);box-shadow:0 18px 55px -12px rgba(0,229,255,.6)}
+.btn--wa{
+  background:linear-gradient(135deg,#6ef7c3,var(--ok) 60%,#0f9d6b);
+  color:#03271a;font-weight:800;
+  box-shadow:0 12px 40px -12px rgba(46,230,168,.45);
+}
+.btn--wa:hover{transform:translateY(-3px);box-shadow:0 18px 55px -12px rgba(46,230,168,.6)}
+.prov--inactive .prov__contact .btn{pointer-events:none}

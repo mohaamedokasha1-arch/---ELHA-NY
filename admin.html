@@ -71,10 +71,8 @@
       </div>
       <nav class="side__nav" id="sideNav">
         <button class="side__item active" data-view="overview">📊 <span>نظرة عامة</span></button>
-        <button class="side__item" data-view="requests">📥 <span>الطلبات</span><em class="side__badge" id="pendingBadge">0</em></button>
         <button class="side__item" data-view="joins">🤝 <span>طلبات الانضمام</span><em class="side__badge" id="joinBadge">0</em></button>
-        <button class="side__item" data-view="providers">👥 <span>المزودون</span></button>
-        <button class="side__item" data-view="services">🧩 <span>الخدمات والأسعار</span></button>
+        <button class="side__item" data-view="providers">👷 <span>العمال والحالات</span></button>
         <button class="side__item" data-view="settings">⚙️ <span>الإعدادات</span></button>
       </nav>
       <div class="side__foot">
@@ -104,20 +102,20 @@
         <section class="view" id="view-overview">
           <div class="acards">
             <div class="acard gold-frame">
-              <div class="acard__ic acard__ic--gold">📥</div>
-              <div><div class="acard__num" id="stTotal">0</div><div class="acard__lbl">إجمالي الطلبات</div></div>
+              <div class="acard__ic acard__ic--gold">👷</div>
+              <div><div class="acard__num" id="stWorkers">0</div><div class="acard__lbl">إجمالي العمال على الدليل</div></div>
             </div>
             <div class="acard gold-frame">
-              <div class="acard__ic acard__ic--amber">⏳</div>
-              <div><div class="acard__num" id="stPending">0</div><div class="acard__lbl">طلبات قيد الانتظار</div></div>
+              <div class="acard__ic acard__ic--green">🟢</div>
+              <div><div class="acard__num" id="stActive">0</div><div class="acard__lbl">نشط — متاح الآن</div></div>
             </div>
             <div class="acard gold-frame">
-              <div class="acard__ic acard__ic--cyan">✅</div>
-              <div><div class="acard__num" id="stDone">0</div><div class="acard__lbl">طلبات مكتملة</div></div>
+              <div class="acard__ic acard__ic--amber">🔴</div>
+              <div><div class="acard__num" id="stBusy">0</div><div class="acard__lbl">مشغول حالياً</div></div>
             </div>
             <div class="acard gold-frame">
-              <div class="acard__ic acard__ic--green">💰</div>
-              <div><div class="acard__num" id="stRevenue">0</div><div class="acard__lbl">إيرادات تقديرية (ج.م)</div></div>
+              <div class="acard__ic acard__ic--cyan">⚫</div>
+              <div><div class="acard__num" id="stInactive">0</div><div class="acard__lbl">غير نشط</div></div>
             </div>
             <div class="acard gold-frame">
               <div class="acard__ic acard__ic--orange">🤝</div>
@@ -127,46 +125,22 @@
 
           <div class="ov-grid">
             <div class="panel gold-frame">
-              <div class="panel__head"><h3>📈 الطلبات خلال 7 أيام</h3><span class="panel__hint">يومي</span></div>
-              <div class="chart" id="chart"></div>
+              <div class="panel__head"><h3>📊 توزيع العمال على الأقسام</h3></div>
+              <div class="dist" id="dist"></div>
             </div>
             <div class="panel gold-frame">
-              <div class="panel__head"><h3>🔥 آخر الطلبات</h3><a href="#" class="panel__link" data-goview="requests">عرض الكل ←</a></div>
+              <div class="panel__head"><h3>🔥 آخر طلبات الانضمام</h3><a href="#" class="panel__link" data-goview="joins">عرض الكل ←</a></div>
               <div id="recentList" class="recent"></div>
             </div>
           </div>
 
           <div class="panel gold-frame">
-            <div class="panel__head"><h3>📊 توزيع الخدمات</h3></div>
-            <div class="dist" id="dist"></div>
-          </div>
-        </section>
-
-        <!-- Requests -->
-        <section class="view" id="view-requests" hidden>
-          <div class="tabs" id="reqTabs">
-            <button class="tab active" data-tab="all">الكل</button>
-            <button class="tab" data-tab="pending">قيد الانتظار</button>
-            <button class="tab" data-tab="active">جاري التنفيذ</button>
-            <button class="tab" data-tab="done">مكتملة</button>
-            <button class="tab" data-tab="cancelled">ملغاة</button>
-          </div>
-          <div class="panel gold-frame">
+            <div class="panel__head"><h3>⚡ التحكم السريع في حالات العمال</h3><span class="panel__hint">أي تغيير ينعكس فوراً على كروت الموقع</span></div>
             <div class="table-wrap">
               <table class="table">
-                <thead>
-                  <tr>
-                    <th>رقم الطلب</th><th>الخدمة</th><th>العميل</th><th>الهاتف</th>
-                    <th>العنوان</th><th>الموعد</th><th>التكلفة</th><th>الحالة</th><th></th>
-                  </tr>
-                </thead>
-                <tbody id="reqBody"></tbody>
+                <thead><tr><th>العامل</th><th>التخصص</th><th>الحالة</th><th>التحكم</th></tr></thead>
+                <tbody id="quickBody"></tbody>
               </table>
-            </div>
-            <div class="empty-box" id="reqEmpty" hidden>
-              <div class="big">📭</div>
-              <h3>مفيش طلبات هنا</h3>
-              <p>لو طلب عميل من الموقع، هيظهر هنا مباشرة.</p>
             </div>
           </div>
         </section>
@@ -174,7 +148,7 @@
         <!-- Join requests (service provider onboarding) -->
         <section class="view" id="view-joins" hidden>
           <div class="join-note gold-frame">
-            🛡️ <b>سياسة المنصة:</b> مفيش أي نشاط بيتتفعّل أو يظهر على الموقع قبل موافقة الإدارة. كل طلب بيتراجع يدويًا — الاعتماد بيضيف المزود لقائمة الموقع فورًا، والرفض بيسجله في الأرشيف.
+            🛡️ <b>سياسة الدليل:</b> مفيش أي نشاط بيتفعّل أو يظهر على الموقع قبل موافقة الإدارة. كل طلب بيتراجع يدويًا — الاعتماد بيضيف كارت العامل بأزرار الاتصال والواتساب فورًا، والرفض بيسجله في الأرشيف.
           </div>
           <div class="tabs" id="joinTabs">
             <button class="tab active" data-jtab="all">الكل</button>
@@ -190,25 +164,20 @@
           </div>
         </section>
 
-        <!-- Providers -->
+        <!-- Providers / workers -->
         <section class="view" id="view-providers" hidden>
           <div class="panel gold-frame">
             <div class="panel__head">
-              <h3>👥 إدارة المزودين</h3>
-              <span class="panel__hint">فعّل أو أوقف تفعيل أي مزود</span>
+              <h3>👷 إدارة العمال ومقدمي الخدمات</h3>
+              <span class="panel__hint">نشط 🟢 / مشغول 🔴 / غير نشط ⚫ — ينعكس فوراً على الموقع</span>
             </div>
             <div class="table-wrap">
               <table class="table">
-                <thead><tr><th>المزود</th><th>المتخصص</th><th>المنطقة</th><th>التقييم</th><th>السعر</th><th>الحالة</th><th>التحكم السريع — ينعكس فوراً على الموقع</th></tr></thead>
+                <thead><tr><th>العامل</th><th>التخصص</th><th>المنطقة</th><th>اتصال</th><th>واتساب</th><th>الحالة</th><th>التحكم السريع</th></tr></thead>
                 <tbody id="provBody"></tbody>
               </table>
             </div>
           </div>
-        </section>
-
-        <!-- Services -->
-        <section class="view" id="view-services" hidden>
-          <div class="svc-admin-grid" id="svcAdminGrid"></div>
         </section>
 
         <!-- Settings -->
@@ -225,19 +194,18 @@
             </div>
             <div class="panel gold-frame">
               <div class="panel__head"><h3>🧹 إدارة البيانات</h3></div>
-              <p class="set-desc">طلبات العملاء محفوظة محليًا في المتصفح. يمكنك إعادة تهيئة البيانات التجريبية أو مسح كل الطلبات.</p>
+              <p class="set-desc">حالات العمال وطلبات الانضمام محفوظة محليًا في المتصفح. يمكنك إعادة ضبط كل حالات العمال إلى «نشط 🟢» بضغطة واحدة.</p>
               <div class="set-actions">
-                <button class="btn btn--ghost btn--sm" id="reseedBtn">↻ إعادة البيانات التجريبية</button>
-                <button class="btn btn--danger btn--sm" id="wipeBtn">🗑 مسح كل الطلبات</button>
+                <button class="btn btn--ghost btn--sm" id="resetStatusBtn">↻ إعادة ضبط حالات العمال (الكل نشط)</button>
               </div>
             </div>
             <div class="panel gold-frame">
               <div class="panel__head"><h3>ℹ️ عن المنصة</h3></div>
               <ul class="set-list">
-                <li><span>الإصدار</span><b>v1.0.0 — Midnight Gold</b></li>
+                <li><span>الإصدار</span><b>v2.0.0 — Direct Directory</b></li>
+                <li><span>النموذج</span><b>دليل مباشر — اتصال وواتساب بدون وسيط</b></li>
                 <li><span>اللغة</span><b>العربية (RTL)</b></li>
-                <li><span>الخطوط</span><b>Cairo / Tajawal</b></li>
-                <li><span>الحالة</span><b class="ok">● تشغيل تجريبي محلي</b></li>
+                <li><span>النطاق</span><b>محافظة الشرقية فقط</b></li>
               </ul>
             </div>
           </div>
