@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>لوحة تحكم الإدارة | الحَقني</title>
+  <link rel="icon" type="image/png" href="assets/logo-mark.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/admin.css">
+  <script src="js/data.js" defer></script>
+  <script src="js/auth.js" defer></script>
+  <script src="js/admin.js" defer></script>
+</head>
+<body>
+
+  <!-- ================= AUTH GATE ================= -->
+  <div class="auth" id="authView">
+    <div class="auth__bg" aria-hidden="true">
+      <div class="auth__orb auth__orb--gold"></div>
+      <div class="auth__orb auth__orb--cyan"></div>
+    </div>
+    <div class="auth__card" id="authCard">
+      <div class="auth__brand">
+        <img src="assets/logo-mark.png" alt="شعار الحقني">
+        <div>
+          <div class="auth__title grad">الحَقني</div>
+          <div class="auth__sub">لوحة تحكم الإدارة — Elha'ni Admin</div>
+        </div>
+      </div>
+      <p class="auth__lead">منطقة محمية — الدخول للمسؤولين المصرح لهم فقط.</p>
+
+      <form id="authForm" autocomplete="off" novalidate>
+        <div class="auth__field">
+          <label for="pass">كلمة السر الرئيسية</label>
+          <div class="auth__input">
+            <input type="password" id="pass" placeholder="••••••••••••" spellcheck="false">
+            <button type="button" id="passToggle" class="auth__eye" aria-label="إظهار كلمة السر">👁</button>
+          </div>
+          <div class="auth__err" id="authErr"></div>
+        </div>
+        <label class="auth__remember">
+          <input type="checkbox" id="remember" checked>
+          <span>تذكرني على هذا الجهاز (30 يوم)</span>
+        </label>
+        <button type="submit" class="btn btn--gold btn--block auth__btn" id="authBtn">
+          <span class="auth__spin" hidden></span> التحقق والدخول
+        </button>
+      </form>
+
+      <div class="auth__lock" id="authLock" hidden>
+        ⏳ محاولات كثيرة… الانتظار <b id="lockCount">30</b> ثانية
+      </div>
+
+      <a class="auth__back" href="index.html">→ العودة للموقع الرئيسي</a>
+    </div>
+  </div>
+
+  <!-- ================= DASHBOARD ================= -->
+  <div class="adapp" id="appView" hidden>
+    <!-- Sidebar -->
+    <aside class="side">
+      <div class="side__brand">
+        <img src="assets/logo-mark.png" alt="شعار الحقني">
+        <div>
+          <div class="side__name grad">الحَقني</div>
+          <div class="side__role">المدير العام</div>
+        </div>
+      </div>
+      <nav class="side__nav" id="sideNav">
+        <button class="side__item active" data-view="overview">📊 <span>نظرة عامة</span></button>
+        <button class="side__item" data-view="requests">📥 <span>الطلبات</span><em class="side__badge" id="pendingBadge">0</em></button>
+        <button class="side__item" data-view="joins">🤝 <span>طلبات الانضمام</span><em class="side__badge" id="joinBadge">0</em></button>
+        <button class="side__item" data-view="providers">👥 <span>المزودون</span></button>
+        <button class="side__item" data-view="services">🧩 <span>الخدمات والأسعار</span></button>
+        <button class="side__item" data-view="settings">⚙️ <span>الإعدادات</span></button>
+      </nav>
+      <div class="side__foot">
+        <a class="side__home" href="index.html">🌐 عرض الموقع</a>
+        <button class="side__logout" id="logoutBtn">🚪 تسجيل الخروج</button>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <h1 class="topbar__title" id="viewTitle">نظرة عامة</h1>
+          <div class="topbar__date" id="todayDate"></div>
+        </div>
+        <div class="topbar__user">
+          <span class="topbar__avatar">م</span>
+          <div>
+            <div class="topbar__name">Admin</div>
+            <div class="topbar__status"><i></i> جلسة نشطة</div>
+          </div>
+        </div>
+      </header>
+
+      <div class="content">
+        <!-- Overview -->
+        <section class="view" id="view-overview">
+          <div class="acards">
+            <div class="acard gold-frame">
+              <div class="acard__ic acard__ic--gold">📥</div>
+              <div><div class="acard__num" id="stTotal">0</div><div class="acard__lbl">إجمالي الطلبات</div></div>
+            </div>
+            <div class="acard gold-frame">
+              <div class="acard__ic acard__ic--amber">⏳</div>
+              <div><div class="acard__num" id="stPending">0</div><div class="acard__lbl">طلبات قيد الانتظار</div></div>
+            </div>
+            <div class="acard gold-frame">
+              <div class="acard__ic acard__ic--cyan">✅</div>
+              <div><div class="acard__num" id="stDone">0</div><div class="acard__lbl">طلبات مكتملة</div></div>
+            </div>
+            <div class="acard gold-frame">
+              <div class="acard__ic acard__ic--green">💰</div>
+              <div><div class="acard__num" id="stRevenue">0</div><div class="acard__lbl">إيرادات تقديرية (ج.م)</div></div>
+            </div>
+            <div class="acard gold-frame">
+              <div class="acard__ic acard__ic--orange">🤝</div>
+              <div><div class="acard__num" id="stJoins">0</div><div class="acard__lbl">طلبات انضمام قيد المراجعة</div></div>
+            </div>
+          </div>
+
+          <div class="ov-grid">
+            <div class="panel gold-frame">
+              <div class="panel__head"><h3>📈 الطلبات خلال 7 أيام</h3><span class="panel__hint">يومي</span></div>
+              <div class="chart" id="chart"></div>
+            </div>
+            <div class="panel gold-frame">
+              <div class="panel__head"><h3>🔥 آخر الطلبات</h3><a href="#" class="panel__link" data-goview="requests">عرض الكل ←</a></div>
+              <div id="recentList" class="recent"></div>
+            </div>
+          </div>
+
+          <div class="panel gold-frame">
+            <div class="panel__head"><h3>📊 توزيع الخدمات</h3></div>
+            <div class="dist" id="dist"></div>
+          </div>
+        </section>
+
+        <!-- Requests -->
+        <section class="view" id="view-requests" hidden>
+          <div class="tabs" id="reqTabs">
+            <button class="tab active" data-tab="all">الكل</button>
+            <button class="tab" data-tab="pending">قيد الانتظار</button>
+            <button class="tab" data-tab="active">جاري التنفيذ</button>
+            <button class="tab" data-tab="done">مكتملة</button>
+            <button class="tab" data-tab="cancelled">ملغاة</button>
+          </div>
+          <div class="panel gold-frame">
+            <div class="table-wrap">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>رقم الطلب</th><th>الخدمة</th><th>العميل</th><th>الهاتف</th>
+                    <th>العنوان</th><th>الموعد</th><th>التكلفة</th><th>الحالة</th><th></th>
+                  </tr>
+                </thead>
+                <tbody id="reqBody"></tbody>
+              </table>
+            </div>
+            <div class="empty-box" id="reqEmpty" hidden>
+              <div class="big">📭</div>
+              <h3>مفيش طلبات هنا</h3>
+              <p>لو طلب عميل من الموقع، هيظهر هنا مباشرة.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Join requests (service provider onboarding) -->
+        <section class="view" id="view-joins" hidden>
+          <div class="join-note gold-frame">
+            🛡️ <b>سياسة المنصة:</b> مفيش أي نشاط بيتتفعّل أو يظهر على الموقع قبل موافقة الإدارة. كل طلب بيتراجع يدويًا — الاعتماد بيضيف المزود لقائمة الموقع فورًا، والرفض بيسجله في الأرشيف.
+          </div>
+          <div class="tabs" id="joinTabs">
+            <button class="tab active" data-jtab="all">الكل</button>
+            <button class="tab" data-jtab="pending">قيد المراجعة</button>
+            <button class="tab" data-jtab="approved">معتمدة</button>
+            <button class="tab" data-jtab="rejected">مرفوضة</button>
+          </div>
+          <div class="join-list" id="joinList"></div>
+          <div class="empty-box" id="joinEmpty" hidden>
+            <div class="big">🤝</div>
+            <h3>مفيش طلبات انضمام هنا</h3>
+            <p>لو مقدم خدمة أرسل طلب «انضم إلينا» من الموقع، هيظهر هنا للمراجعة.</p>
+          </div>
+        </section>
+
+        <!-- Providers -->
+        <section class="view" id="view-providers" hidden>
+          <div class="panel gold-frame">
+            <div class="panel__head">
+              <h3>👥 إدارة المزودين</h3>
+              <span class="panel__hint">فعّل أو أوقف تفعيل أي مزود</span>
+            </div>
+            <div class="table-wrap">
+              <table class="table">
+                <thead><tr><th>المزود</th><th>المتخصص</th><th>المنطقة</th><th>التقييم</th><th>السعر</th><th>الحالة</th><th>التحكم السريع — ينعكس فوراً على الموقع</th></tr></thead>
+                <tbody id="provBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- Services -->
+        <section class="view" id="view-services" hidden>
+          <div class="svc-admin-grid" id="svcAdminGrid"></div>
+        </section>
+
+        <!-- Settings -->
+        <section class="view" id="view-settings" hidden>
+          <div class="settings-grid">
+            <div class="panel gold-frame">
+              <div class="panel__head"><h3>🔐 الجلسة والأمان</h3></div>
+              <ul class="set-list">
+                <li><span>تسجيل الدخول عند</span><b id="sessAt">—</b></li>
+                <li><span>الجلسة تنتهي في</span><b id="sessExp">—</b></li>
+                <li><span>نوع التحقق</span><b>SHA-256 + جلسة بذاكرة محلية</b></li>
+                <li><span>تطويق المحاولات</span><b>5 محاولات خاطئة = إيقاف 30 ثانية</b></li>
+              </ul>
+            </div>
+            <div class="panel gold-frame">
+              <div class="panel__head"><h3>🧹 إدارة البيانات</h3></div>
+              <p class="set-desc">طلبات العملاء محفوظة محليًا في المتصفح. يمكنك إعادة تهيئة البيانات التجريبية أو مسح كل الطلبات.</p>
+              <div class="set-actions">
+                <button class="btn btn--ghost btn--sm" id="reseedBtn">↻ إعادة البيانات التجريبية</button>
+                <button class="btn btn--danger btn--sm" id="wipeBtn">🗑 مسح كل الطلبات</button>
+              </div>
+            </div>
+            <div class="panel gold-frame">
+              <div class="panel__head"><h3>ℹ️ عن المنصة</h3></div>
+              <ul class="set-list">
+                <li><span>الإصدار</span><b>v1.0.0 — Midnight Gold</b></li>
+                <li><span>اللغة</span><b>العربية (RTL)</b></li>
+                <li><span>الخطوط</span><b>Cairo / Tajawal</b></li>
+                <li><span>الحالة</span><b class="ok">● تشغيل تجريبي محلي</b></li>
+              </ul>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <div class="toast-wrap" id="toasts" aria-live="polite"></div>
+</body>
+</html>

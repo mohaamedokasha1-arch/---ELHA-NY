@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>الحقني | منصة الشرقية للخدمات السريعة — توصيل، أوناش، صيانة طارئة</title>
+  <meta name="description" content="الحقني — منصة محافظة الشرقية للخدمات السريعة: توصيل فوري، أوناش ونقل ثقيل، صيانة طارئة، وخدمات معيشية في الزقازيق والعاشر وبلبيس ومنيا القمح وكل المراكز.">
+  <meta property="og:title" content="الحقني | منصة الشرقية للخدمات السريعة">
+  <meta property="og:description" content="توصيل فوري • أوناش ونقل ثقيل • صيانة طارئة • خدمات معيشية — في كل مراكز محافظة الشرقية.">
+  <meta property="og:image" content="assets/hero-rider.png">
+  <meta property="og:type" content="website">
+  <link rel="icon" type="image/png" href="assets/logo-mark.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <script src="js/data.js" defer></script>
+  <script src="js/app.js" defer></script>
+</head>
+<body>
+
+  <!-- ===== Preloader ===== -->
+  <div class="preloader" id="preloader" aria-hidden="true">
+    <div class="preloader__box">
+      <div class="preloader__ring"></div>
+      <img class="preloader__mark" src="assets/logo-mark.png" alt="">
+    </div>
+    <div class="preloader__name grad">الحقني</div>
+    <div class="preloader__sub">نحقنك بالسرعة… في كل الشرقية</div>
+  </div>
+
+  <!-- ===== Navigation ===== -->
+  <header class="nav" id="nav">
+    <div class="nav__inner">
+      <a href="#hero" class="nav__logo" aria-label="الحقني — الرئيسية">
+        <img class="logo__mark" src="assets/logo-mark.png" alt="شعار الحقني">
+        <span>
+          <span class="logo__word grad">الحقني</span>
+          <span class="logo__tag">ELHA'NI • الشرقية</span>
+        </span>
+      </a>
+
+      <nav class="nav__links" aria-label="القائمة الرئيسية">
+        <a class="nav__link active" href="#hero">الرئيسية</a>
+        <a class="nav__link" href="#services">الخدمات</a>
+        <a class="nav__link" href="#how">كيف نعمل؟</a>
+        <a class="nav__link" href="#providers">المزودون</a>
+        <a class="nav__link" href="#reviews">آراء العملاء</a>
+        <a class="nav__link" href="#join">انضم إلينا</a>
+      </nav>
+
+      <div class="nav__actions">
+        <a class="btn btn--cyan btn--sm" href="tel:+201225990584">🚨 طوارئ</a>
+        <button class="btn btn--gold btn--sm" data-book>⚡ اطلب الآن</button>
+        <button class="nav__burger" id="burger" aria-label="القائمة">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Mobile menu -->
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="#hero">الرئيسية <small>01</small></a>
+    <a href="#services">الخدمات <small>02</small></a>
+    <a href="#how">كيف نعمل؟ <small>03</small></a>
+    <a href="#providers">المزودون <small>04</small></a>
+    <a href="#reviews">آراء العملاء <small>05</small></a>
+    <a href="#join">انضم إلينا <small>06</small></a>
+    <a href="tel:+201225990584">🚨 خط الطوارئ — 0122 599 0584</a>
+    <a href="#" data-book>⚡ اطلب الآن</a>
+  </div>
+
+  <main>
+    <!-- ===== Hero ===== -->
+    <section class="hero" id="hero">
+      <canvas id="particles" aria-hidden="true"></canvas>
+      <div class="container hero__grid">
+        <div class="hero__text">
+          <span class="hero__badge"><span class="bolt">⚡</span> أسرع منصة خدمات في محافظة الشرقية — 24/7</span>
+          <h1 class="hero__title">
+            «الحَقَّني»…
+            <span class="line2">يعني <span class="grad">خلّصناها</span> في دقائق!</span>
+          </h1>
+          <p class="hero__sub">
+            منصة واحدة لكل الخدمات: <b>توصيل فوري</b>، <b>أوناش ونقل ثقيل</b>، <b>صيانة طارئة</b>، وخدمات معيشية —
+            مزودون موثوقون بتقييمات حقيقية، وتقدر تشوف حالة كل مزود لحظة بلحظة <b>في كل مراكز ومدينة محافظة الشرقية</b>.
+          </p>
+
+          <form class="hero__search" id="heroSearch" autocomplete="off">
+            <div class="grow">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#d4af37" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+              <input type="text" id="heroQ" placeholder="ابحث عن خدمة في الشرقية… سباك، كهربائي، أونش، توصيل">
+            </div>
+            <select id="heroCat" aria-label="نوع الخدمة">
+              <option value="all">كل الخدمات</option>
+              <option value="delivery">دليفري وتوصيل فوري</option>
+              <option value="cranes">أوناش ورفع ثقيل</option>
+              <option value="maintenance">صيانة طارئة</option>
+              <option value="lifestyle">خدمات معيشية</option>
+            </select>
+            <button type="submit" class="btn btn--gold">ابحث <span aria-hidden="true">⌖</span></button>
+          </form>
+
+          <div class="hero__chips" id="heroChips">
+            <button class="chip" data-chip="delivery">🛵 توصيل فوري</button>
+            <button class="chip" data-chip="cranes">🏗️ أوناش</button>
+            <button class="chip" data-chip="plumbing">🔧 سباكة</button>
+            <button class="chip" data-chip="electric">⚡ كهرباء</button>
+            <button class="chip" data-chip="ac">❄️ تكييفات</button>
+            <button class="chip" data-chip="cleaning">✨ تنظيف</button>
+          </div>
+        </div>
+
+        <div class="hero__visual">
+          <div class="hero__img-wrap">
+            <img src="assets/hero-rider.png" alt="مندوب توصيل الحقني متحرك في شوارع الزقازيق ليلًا">
+          </div>
+          <div class="float-chip fc-1">
+            <div class="ic">🛵</div>
+            <div><div class="t">توصيل فوري</div><div class="s">خلال 30 دقيقة</div></div>
+          </div>
+          <div class="float-chip fc-2">
+            <div class="ic">🛡️</div>
+            <div><div class="t">مزودون موثوقون</div><div class="s">معتمدون من الإدارة</div></div>
+          </div>
+          <div class="float-chip fc-3">
+            <div class="ic">📍</div>
+            <div><div class="t">كل الشرقية</div><div class="s">15 مركز ومدينة</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="hero__scroll" aria-hidden="true">
+        <div class="mouse"></div>
+        <span>SCROLL</span>
+      </div>
+    </section>
+
+    <!-- ===== Live ticker ===== -->
+    <div class="ticker" aria-hidden="true">
+      <div class="ticker__track" id="tickerTrack"></div>
+    </div>
+
+    <!-- ===== Stats ===== -->
+    <section class="stats" id="stats">
+      <div class="container">
+        <div class="stats__grid">
+          <div class="stat gold-frame reveal"><div class="stat__num"><span class="cnt" data-count="12480">0</span><span class="suf">+</span></div><div class="stat__label">طلب مكتمل</div></div>
+          <div class="stat gold-frame reveal"><div class="stat__num"><span class="cnt" data-count="850">0</span><span class="suf">+</span></div><div class="stat__label">مزود موثوق</div></div>
+          <div class="stat gold-frame reveal"><div class="stat__num"><span class="cnt" data-count="45">0</span></div><div class="stat__label">دقيقة متوسط الاستجابة</div></div>
+          <div class="stat gold-frame reveal"><div class="stat__num"><span class="cnt" data-count="4.9" data-decimals="1">0</span></div><div class="stat__label">متوسط تقييم العملاء</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== Services ===== -->
+    <section class="section services" id="services">
+      <div class="container">
+        <div class="section__head reveal">
+          <span class="eyebrow"><span class="dot"></span> خدماتنا</span>
+          <h2 class="section__title">منصة واحدة… <span class="grad">ألف خدمة</span></h2>
+          <p class="section__sub">أربعة أقطاب رئيسية تغطي كل احتياجاتك — من طلب صغيرة على السكوتر في الزقازيق لرافعة 50 طن في العاشر من رمضان.</p>
+        </div>
+        <div class="svc-grid" id="svcGrid"><!-- rendered by app.js --></div>
+      </div>
+    </section>
+
+    <!-- ===== How it works ===== -->
+    <section class="section" id="how">
+      <div class="container">
+        <div class="section__head reveal">
+          <span class="eyebrow"><span class="dot"></span> ثلاث خطوات</span>
+          <h2 class="section__title">كيف «تُحَقَّن»؟ <span class="grad">بساطة مطلقة</span></h2>
+        </div>
+        <div class="how-grid">
+          <div class="step gold-frame reveal">
+            <div class="step__num">١</div>
+            <div class="step__title">اطلب</div>
+            <p class="step__desc">اختار الخدمة واكتب عنوانك ومطلوبك — ياخذ 30 ثانية فقط، ومزوّدك بيتحدد في دقايق.</p>
+          </div>
+          <div class="step gold-frame reveal">
+            <div class="step__num">٢</div>
+            <div class="step__title">نحددك</div>
+            <p class="step__desc">ذكاءنا يطابقك مع أقرب مزود معتمد في مركزك أو مركز قريب، وتابعه لحظيًا على الخريطة.</p>
+          </div>
+          <div class="step gold-frame reveal">
+            <div class="step__num">٣</div>
+            <div class="step__title">الحق! ✅</div>
+            <p class="step__desc">الخدمة تتم بسرعة واحترافية، وتقيّم المزود — رضاك هو وقودنا.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== Providers ===== -->
+    <section class="section providers" id="providers">
+      <div class="container">
+        <div class="section__head reveal">
+          <span class="eyebrow"><span class="dot"></span> فريق النخبة</span>
+          <h2 class="section__title">مزودون <span class="grad">معتمدون</span> بتقييمات حقيقية</h2>
+          <p class="section__sub">كل مزود على «الحقني» خضع لمراجعة شاملة من الإدارة — مفيش إضافة فورية ولا عشوائية، ومعاييرنا مش فيها تفريط.</p>
+        </div>
+
+        <div class="toolbar reveal">
+          <div class="toolbar__search">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#d4af37" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+            <input type="text" id="provQ" placeholder="ابحث باسم المزود أو الخدمة…">
+          </div>
+          <div class="toolbar__selects">
+            <select id="provCity" aria-label="المركز">
+              <option value="">كل مراكز الشرقية</option>
+            </select>
+            <select id="provSort" aria-label="ترتيب">
+              <option value="rating">الأعلى تقييمًا</option>
+              <option value="reviews">الأكثر طلبًا</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="filter-chips reveal" id="filterChips">
+          <button class="chip active" data-filter="all">الكل</button>
+          <button class="chip" data-filter="delivery">🛵 دليفري وتوصيل</button>
+          <button class="chip" data-filter="cranes">🏗️ أوناش</button>
+          <button class="chip" data-filter="maintenance">🔧 صيانة طارئة</button>
+          <button class="chip" data-filter="lifestyle">✨ معيشية</button>
+          <button class="chip" id="availChip" title="عرض المزودين المتاحين للطلب الآن فقط">🟢 المتاح الآن فقط</button>
+        </div>
+
+        <div class="prov-grid" id="provGrid"><!-- rendered by app.js --></div>
+        <div class="empty-state" id="provEmpty">
+          <div class="big">🔍</div>
+          <h3>مفيش نتائج مطابقة</h3>
+          <p>جرّب مركز تاني أو غيّر الفلتر — أو اطلب مباشرة وإحنا هنحددك على أنسب مزود في الشرقية.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== Testimonials ===== -->
+    <section class="section" id="reviews">
+      <div class="container">
+        <div class="section__head reveal">
+          <span class="eyebrow"><span class="dot"></span> شهادات حقيقية</span>
+          <h2 class="section__title">عملاء الشرقية <span class="grad">يقولوا إيه؟</span></h2>
+        </div>
+        <div class="testi-grid" id="testiGrid"><!-- rendered by app.js --></div>
+      </div>
+    </section>
+
+    <!-- ===== Join (service providers) ===== -->
+    <section class="section join" id="join">
+      <div class="container">
+        <div class="join-panel gold-frame reveal">
+          <div class="join__text">
+            <span class="eyebrow"><span class="dot"></span> لمقدمي الخدمات والمحترفين</span>
+            <h2 class="join__title">عندك نشاط أو مهنة؟ <span class="grad">انضم لفريق الحقني</span></h2>
+            <p class="join__desc">
+              مفيش أي إضافة فورية أو عشوائية على المنصة — كل «طلب انضمام لفريق العمل» بيتسجل ويرجع لفريق الإدارة،
+              وبعد المراجعة الشخصية والشروط، بيتفعل النشاط ويظهر للعملاء. التزامنا بالجودة هو سر ثقة عملاءنا في الشرقية.
+            </p>
+            <ul class="join__steps">
+              <li><b>١</b> املأ طلب الانضمام: بياناتك، نشاطك، ومركزك داخل المحافظة</li>
+              <li><b>٢</b> فريق الإدارة يراجع الطلب يدويًا خلال 24 ساعة</li>
+              <li><b>٣</b> بعد الاعتماد، بيتفعّل نشاطك على المنصة ويظهر للعملاء مباشرة</li>
+            </ul>
+            <div class="join__btns">
+              <button class="btn btn--gold" data-join>🤝 أرسل طلب انضمام</button>
+              <a class="btn btn--ghost" href="https://wa.me/201225990584" target="_blank" rel="noopener">✆ اسألنا واتساب: 0122 599 0584</a>
+            </div>
+          </div>
+          <div class="join__side">
+            <img src="assets/maintenance.png" alt="فريق من محترفي خدمات الشرقية">
+            <div class="join__chip">
+              <div class="n">مراجعة يدوية 100%</div>
+              <div class="l">كل نشاط بيتفحص قبل التفعيل</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== CTA ===== -->
+    <section class="cta-band">
+      <div class="container">
+        <div class="cta-band__inner reveal">
+          <div>
+            <span class="eyebrow"><span class="dot"></span> جاهز تبدأ؟</span>
+            <h2 class="cta-band__title" style="margin-top:18px">
+              لا تحمّل حاجة… <br><span class="grad">الطلب الأول بـ 5 دقايق</span>
+            </h2>
+            <p class="cta-band__text">افتح الموقع، اكتب مطلوبك، وادوس «اطلب». الباقي علينا — فوري وفي أي وقت، حتى في نص الليل في أي مركز من مراكز الشرقية. 😉</p>
+            <div class="cta-band__btns">
+              <button class="btn btn--gold" data-book>⚡ اطلب خدمة الآن</button>
+              <a class="btn btn--cyan" href="tel:+201225990584">🚨 خط الطوارئ: 0122 599 0584</a>
+            </div>
+          </div>
+          <div class="cta-band__img">
+            <img src="assets/lifestyle.png" alt="خدمة منزلية احترافية من فريق الحقني بالشرقية">
+            <div class="cta-band__badge">
+              <div><div class="n">24/7</div><div class="l">جاهزين في أي وقت</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ===== Footer ===== -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer__grid">
+        <div class="footer__brand">
+          <a href="#hero" class="nav__logo">
+            <img class="logo__mark" src="assets/logo-mark.png" alt="شعار الحقني">
+            <span>
+              <span class="logo__word grad">الحقني</span>
+              <span class="logo__tag">ELHA'NI • الشرقية</span>
+            </span>
+          </a>
+          <p>منصة محافظة الشرقية للخدمات السريعة: توصيل، أوناش، صيانة طارئة، وخدمات معيشية — نغطي كل المراكز من الزقازيق والعاشر لبلبيس ومنيا القمح وديرب نجم وغيرها.</p>
+          <div class="footer__social">
+            <a href="#" aria-label="فيسبوك">f</a>
+            <a href="#" aria-label="إنستجرام">◎</a>
+            <a href="#" aria-label="X">𝕏</a>
+            <a href="https://wa.me/201225990584" target="_blank" rel="noopener" aria-label="واتساب">✆</a>
+          </div>
+        </div>
+        <div>
+          <div class="footer__title">روابط سريعة</div>
+          <ul class="footer__links">
+            <li><a href="#services">الخدمات</a></li>
+            <li><a href="#providers">المزودون</a></li>
+            <li><a href="#how">كيف نعمل؟</a></li>
+            <li><a href="#join">انضم إلينا — مقدمو الخدمات</a></li>
+            <li><a href="admin.html">لوحة تحكم الإدارة</a></li>
+          </ul>
+        </div>
+        <div>
+          <div class="footer__title">الخدمات</div>
+          <ul class="footer__links">
+            <li><a href="#providers" data-goto-cat="delivery">دليفري وتوصيل فوري</a></li>
+            <li><a href="#providers" data-goto-cat="cranes">أوناش ونقل ثقيل</a></li>
+            <li><a href="#providers" data-goto-cat="maintenance">سباكة وكهرباء</a></li>
+            <li><a href="#providers" data-goto-cat="maintenance">صيانة تكييفات</a></li>
+            <li><a href="#providers" data-goto-cat="lifestyle">تنظيف وخدمات معيشية</a></li>
+          </ul>
+        </div>
+        <div>
+          <div class="footer__title">تواصل معنا</div>
+          <ul class="footer__contact">
+            <li><span class="ic">📍</span> الزقازيق، محافظة الشرقية — ونغطي كل المراكز</li>
+            <li><span class="ic">📞</span> 0122 599 0584 (اتصال • واتساب • طوارئ)</li>
+            <li><span class="ic">✉️</span> care@elhani.eg</li>
+            <li><span class="ic">🕐</span> 24 ساعة / 7 أيام — الطوارئ مش لها ميعاد</li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer__bottom">
+        <span>© 2026 «الحقني» Elha'ni — جميع الحقوق محفوظة • محافظة الشرقية</span>
+        <span class="made">صُنع في الشرقية بـ <span class="heart">❤</span> وسرعة</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ===== Floating actions ===== -->
+  <div class="fab">
+    <a class="fab__btn fab__wa" href="https://wa.me/201225990584" target="_blank" rel="noopener" aria-label="واتساب">
+      <span aria-hidden="true">✆</span><span class="tip">واتساب + طوارئ: 0122 599 0584</span>
+    </a>
+    <a class="fab__btn fab__call" href="tel:+201225990584" aria-label="اتصال">
+      <span aria-hidden="true">📞</span><span class="tip">اتصال فوري: 0122 599 0584</span>
+    </a>
+    <button class="fab__btn fab__top" id="backTop" aria-label="العودة للأعلى">↑</button>
+  </div>
+
+  <!-- ===== Booking modal ===== -->
+  <div class="modal" id="bookModal" role="dialog" aria-modal="true" aria-labelledby="bookTitle">
+    <div class="modal__overlay" data-close></div>
+    <div class="modal__panel">
+      <div id="bookFormView">
+        <div class="modal__head">
+          <h3 class="modal__title" id="bookTitle">اطلب خدمة <span class="grad">الآن</span></h3>
+          <button class="modal__close" data-close aria-label="إغلاق">✕</button>
+        </div>
+        <p class="modal__sub">املا البيانات وإحنا هنحددك على أنسب مزود معتمد في مركزك.</p>
+        <form id="bookForm" novalidate>
+          <div class="form-grid">
+            <div class="field field--full">
+              <label for="fCat">نوع الخدمة <b>*</b></label>
+              <select id="fCat" required></select>
+              <span class="err-msg">اختار نوع الخدمة</span>
+            </div>
+            <div class="field field--full">
+              <label for="fService">تفاصيل الخدمة <b>*</b></label>
+              <input type="text" id="fService" placeholder="مثال: إصلاح محارة مياه في الحمام" required>
+              <span class="err-msg">اكتب تفاصيل الخدمة</span>
+            </div>
+            <div class="field">
+              <label for="fName">الاسم <b>*</b></label>
+              <input type="text" id="fName" placeholder="اسمك بالكامل" required>
+              <span class="err-msg">اكتب اسمك (3 أحرف على الأقل)</span>
+            </div>
+            <div class="field">
+              <label for="fPhone">رقم الموبايل <b>*</b></label>
+              <input type="tel" id="fPhone" inputmode="numeric" placeholder="01xxxxxxxxx" dir="ltr" style="text-align:right" required>
+              <span class="err-msg">رقم مصري صحيح: 01xxxxxxxxx</span>
+            </div>
+            <div class="field">
+              <label for="fCity">المركز / المدينة <b>*</b></label>
+              <select id="fCity" required></select>
+              <span class="err-msg">اختار مركزك من قائمة الشرقية</span>
+            </div>
+            <div class="field">
+              <label for="fTime">الموعد</label>
+              <select id="fTime">
+                <option value="now">⚡ فوري — دلوقتي</option>
+                <option value="2h">خلال ساعتين</option>
+                <option value="today">اليوم بعد كده</option>
+                <option value="custom">موعد محدد (هنتواصل معاك)</option>
+              </select>
+            </div>
+            <div class="field field--full">
+              <label for="fAddr">العنوان بالتفصيل <b>*</b></label>
+              <input type="text" id="fAddr" placeholder="الحي / المنطقة، اسم الشارع، رقم المبنى" required>
+              <span class="err-msg">اكتب العنوان بالتفصيل (5 أحرف على الأقل)</span>
+            </div>
+            <div class="field field--full">
+              <label for="fNotes">ملاحظات إضافية</label>
+              <textarea id="fNotes" placeholder="أي تفاصيل تساعد المزود يجهز صح…"></textarea>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn--gold btn--block" style="flex:1">⚡ تأكيد الطلب</button>
+            <button type="button" class="btn btn--ghost" data-close>إلغاء</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="success-view" id="bookSuccess">
+        <div class="success__check">✓</div>
+        <h3>طلبك اتسجّل! <span class="grad">الحَقَّناك</span> ⚡</h3>
+        <p>هننتبه على أقرب مزود معتمد في مركزك وهنتواصل معاك خلال دقائق على رقمك.</p>
+        <span class="req-id" id="reqId">EHN-0000</span>
+        <div><button class="btn btn--gold" data-close>تمام، شكرًا</button></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Join modal (service provider request) ===== -->
+  <div class="modal" id="joinModal" role="dialog" aria-modal="true" aria-labelledby="joinTitle">
+    <div class="modal__overlay" data-close></div>
+    <div class="modal__panel">
+      <div id="joinFormView">
+        <div class="modal__head">
+          <h3 class="modal__title" id="joinTitle">انضم لفريق <span class="grad">الحقني</span></h3>
+          <button class="modal__close" data-close aria-label="إغلاق">✕</button>
+        </div>
+        <p class="modal__sub">طلب انضمام لفريق العمل — بيتراجع من الإدارة قبل التفعيل، ومفيش نشاط بيتنشر غير بعد الاعتماد.</p>
+        <form id="joinForm" novalidate>
+          <div class="form-grid">
+            <div class="field">
+              <label for="jName">اسم النشاط / الشخص <b>*</b></label>
+              <input type="text" id="jName" placeholder="مثال: أوناش الزقازيق الحديثة" required>
+              <span class="err-msg">اكتب اسم النشاط (3 أحرف على الأقل)</span>
+            </div>
+            <div class="field">
+              <label for="jPhone">رقم الموبايل <b>*</b></label>
+              <input type="tel" id="jPhone" inputmode="numeric" placeholder="01xxxxxxxxx" dir="ltr" style="text-align:right" required>
+              <span class="err-msg">رقم مصري صحيح: 01xxxxxxxxx</span>
+            </div>
+            <div class="field">
+              <label for="jCat">نوع النشاط <b>*</b></label>
+              <select id="jCat" required></select>
+              <span class="err-msg">اختار نوع النشاط</span>
+            </div>
+            <div class="field">
+              <label for="jCity">مركز / مدينة النشاط <b>*</b></label>
+              <select id="jCity" required></select>
+              <span class="err-msg">اختار مركزك من قائمة الشرقية</span>
+            </div>
+            <div class="field field--full">
+              <label for="jJobs">تفاصيل التخصص / الخدمات <b>*</b></label>
+              <input type="text" id="jJobs" placeholder="مثال: سباكة عامة • سخانات • محارة مياه" required>
+              <span class="err-msg">اكتب تخصصك (3 أحرف على الأقل)</span>
+            </div>
+            <div class="field">
+              <label for="jWa">رقم واتساب (اختياري)</label>
+              <input type="tel" id="jWa" inputmode="numeric" placeholder="01xxxxxxxxx" dir="ltr" style="text-align:right">
+              <span class="err-msg">رقم غير صحيح</span>
+            </div>
+            <div class="field field--full">
+              <label for="jNotes">خبرتك وأي معلومات إضافية</label>
+              <textarea id="jNotes" placeholder="سنوات الخبرة، عدد المعدات، المناطق اللي بتخدمها…"></textarea>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn--gold btn--block" style="flex:1">🤝 إرسال طلب الانضمام</button>
+            <button type="button" class="btn btn--ghost" data-close>إلغاء</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="success-view" id="joinSuccess">
+        <div class="success__check">🤝</div>
+        <h3>طلبك اتسجّل! <span class="grad">مراجعة في الطريق</span></h3>
+        <p>فريق الإدارة هيراجع بياناتك خلال 24 ساعة، ولو تمت الموافقة هيتفعّل نشاطك على المنصة وهنتواصل معاك على رقمك.</p>
+        <span class="req-id" id="joinId">JN-0000</span>
+        <div><button class="btn btn--gold" data-close>تمام، أنتظروا الرد</button></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toasts -->
+  <div class="toast-wrap" id="toasts" aria-live="polite"></div>
+
+</body>
+</html>
