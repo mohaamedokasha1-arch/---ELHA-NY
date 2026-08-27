@@ -83,6 +83,25 @@ const ADMIN = "01225990584";
   check("all providers inside محافظة الشرقية", areas.every(a => a.includes("الشرقية")));
   check("RTL preserved", d.documentElement.getAttribute("dir") === "rtl" && d.documentElement.getAttribute("lang") === "ar");
 
+  /* ===== SEO ===== */
+  check("SEO: exact meta title", d.title === "الحقني - دليل الخدمات المباشر بالشرقية");
+  const desc = d.querySelector('meta[name="description"]');
+  check("SEO: meta description (دليفري + الزقازيق + الشرقية)", !!desc && desc.content.includes("دليفري") && desc.content.includes("الزقازيق") && desc.content.includes("الشرقية"));
+  check("SEO: robots index,follow", (d.querySelector('meta[name="robots"]') || {}).content.includes("index"));
+  check("SEO: canonical link", !!d.querySelector('link[rel="canonical"]'));
+  const ogName = d.querySelector('meta[property="og:site_name"]');
+  const ogTitle = d.querySelector('meta[property="og:title"]');
+  const ogImg = d.querySelector('meta[property="og:image"]');
+  check("SEO: og:site_name + og:title exact", !!ogName && ogName.content === "الحقني - دليل الخدمات المباشر بالشرقية" && !!ogTitle && ogTitle.content === "الحقني - دليل الخدمات المباشر بالشرقية");
+  check("SEO: og:image absolute URL + dimensions (WhatsApp-ready)", !!ogImg && ogImg.content.startsWith("https://") && !!d.querySelector('meta[property="og:image:width"]') && !!d.querySelector('meta[property="og:image:height"]'));
+  check("SEO: og:locale ar_EG + og:url + og:description", (d.querySelector('meta[property="og:locale"]') || {}).content === "ar_EG" && !!d.querySelector('meta[property="og:url"]') && !!d.querySelector('meta[property="og:description"]'));
+  let ldOk = false;
+  try {
+    const ld = JSON.parse(d.querySelector('script[type="application/ld+json"]').textContent);
+    ldOk = ld["@graph"].some(n => n["@type"] === "LocalBusiness" && n.name === "الحقني - دليل الخدمات المباشر بالشرقية");
+  } catch (e) {}
+  check("SEO: JSON-LD structured data valid (LocalBusiness)", ldOk);
+
   /* ===== تصفح الأقسام المباشر: قسم ← قائمة عمال القسم ===== */
   const svcCard = d.querySelector('#svcGrid .svc-card[data-goto-cat="cranes"]');
   check("service card is a direct link to workers list", !!svcCard);
