@@ -1,5 +1,7 @@
 /* ============================================================
    الحَقني — ELHA'NI | Main App
+   دليل خدمي مباشر: قسم ← قائمة عمال ← اتصال/واتساب فوري
+   (بدون نظام طلبات، بدون أسعار، بدون وسيط)
    ============================================================ */
 (function () {
   "use strict";
@@ -8,16 +10,11 @@
   var $ = function (s, r) { return (r || document).querySelector(s); };
   var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
 
-  var LS_REQUESTS = "elhani_requests_v1";
   var LS_JOINS = "elhani_join_requests_v1";
   var LS_JOIN_SEQ = "elhani_join_seq";
-  /* رقم الإدارة الموحد: اتصال + واتساب + طوارئ */
-  var ADMIN_PHONE = "01225990584";
-  var ADMIN_TEL = "tel:+201225990584";
-  var ADMIN_WA = "https://wa.me/201225990584";
 
-  /* ===== حالات المزودين الحية (يتحكم فيها الأدمن فقط) =====
-     active: متاح الآن 🟢 | busy: مشغول 🔴 | inactive: غير نشط ⚫ */
+  /* ===== حالات العمال الحية (يتحكم فيها الأدمن فقط) =====
+     active: نشط 🟢 | busy: مشغول 🔴 | inactive: غير نشط ⚫ */
   var LS_PSTATUS = "elhani_provider_status_v1";
 
   function loadPStatus() { try { return JSON.parse(localStorage.getItem(LS_PSTATUS) || "{}"); } catch (e) { return {}; } }
@@ -44,6 +41,10 @@
     savePStatus(s);
     localStorage.setItem("elhani_pstatus_seeded_v1", "1");
   }
+
+  /* أرقام مصرية → صيغ الاتصال المباشر */
+  function telHref(phone) { return "tel:+20" + String(phone || "").replace(/^0/, ""); }
+  function waHref(phone) { return "https://wa.me/20" + String(phone || "").replace(/^0/, ""); }
 
   /* ---------------- Preloader ---------------- */
   function hidePreloader() {
@@ -217,13 +218,27 @@
     track.innerHTML = html + html; // seamless loop
   }
 
-  /* ---------------- Render: services ---------------- */
+  /* ---------------- التنقل المباشر: قسم ← قائمة العمال ---------------- */
+  function gotoCategory(catId) {
+    $$("#filterChips .chip").forEach(function (x) {
+      x.classList.toggle("active", x.getAttribute("data-filter") === catId);
+    });
+    state.cat = catId;
+    state.availOnly = false;
+    var ac = $("#availChip");
+    if (ac) ac.classList.remove("active");
+    applyFilters();
+    var sec = document.getElementById("providers");
+    if (sec && sec.scrollIntoView) try { sec.scrollIntoView({ behavior: "smooth" }); } catch (e) {}
+  }
+
+  /* ---------------- Render: الأقسام الرئيسية ---------------- */
   function renderServices() {
     var grid = $("#svcGrid");
     if (!grid) return;
     grid.innerHTML = D.categories.map(function (c, i) {
       return (
-        '<article class="svc-card gold-frame reveal">' +
+        '<article class="svc-card gold-frame reveal" data-goto-cat="' + c.id + '" role="link" tabindex="0" aria-label="عرض عمال قسم ' + c.name + '">' +
         '  <div class="svc-card__media">' +
         '    <img src="' + c.img + '" alt="' + c.name + '" loading="lazy">' +
         '    <span class="svc-card__num">0' + (i + 1) + "</span>" +
@@ -233,7 +248,7 @@
         '    <p class="svc-card__desc">' + c.desc + "</p>" +
         '    <ul class="svc-card__list">' + c.features.map(function (f) { return "<li>" + f + "</li>"; }).join("") + "</ul>" +
         '    <div class="svc-card__foot">' +
-        '      <a class="svc-card__link" href="#providers" data-book-cat="' + c.id + '">اطلب الآن ←</a>' +
+        '      <a class="svc-card__link" href="#providers" data-goto-cat="' + c.id + '">👷 عرض عمال القسم ←</a>' +
         "    </div>" +
         "  </div>" +
         "</article>"
@@ -251,17 +266,19 @@
     localStorage.setItem(LS_JOIN_SEQ, String(n));
     return "JN-" + n;
   }
-  /* فقط الطلبات التي اعتمدها الأدمن تظهر على المنصة */
+  /* فقط الطلبات التي اعتمدها الأدمن تظهر على الدليل */
   function approvedProviders() {
     return loadJoins().filter(function (j) { return j.status === "approved"; }).map(function (j) {
       var c = catById(j.cat);
       return {
         id: j.id, name: j.name, emoji: c ? c.icon : "🛠️", cat: j.cat,
         sub: j.jobs ? j.jobs.split("•")[0].trim() : "مقدم خدمة",
-        rating: null, reviews: 0,
         area: (j.city ? j.city + " — الشرقية" : "الشرقية"),
-        price: 0, badge: "new",
-        jobs: j.jobs || "", active: true, isNew: true
+        badge: "new",
+        jobs: j.jobs || "",
+        phone: j.phone || "",
+        wa: j.wa || j.phone || "",
+        active: true, isNew: true
       };
     });
   }
@@ -280,38 +297,23 @@
     if (!localStorage.getItem(LS_JOIN_SEQ)) localStorage.setItem(LS_JOIN_SEQ, "502");
   }
 
-  /* ---------------- Render: providers ---------------- */
-  var state = { cat: "all", q: "", sort: "rating", city: "", availOnly: false };
-
-  function starStr(r) {
-    var full = Math.round(r);
-    return "★".repeat(full) + "☆".repeat(5 - full);
-  }
-  function badgeHtml(b) {
-    if (b === "top") return '<span class="badge badge--top">👑 الأكثر طلبًا</span>';
-    if (b === "fast") return '<span class="badge badge--fast">⚡ استجابة سريعة</span>';
-    if (b === "urgent") return '<span class="badge badge--urgent">🚨 طوارئ 24/7</span>';
-    if (b === "new") return '<span class="badge badge--new">✨ جديد — اعتمدته الإدارة</span>';
-    return "";
-  }
+  /* ---------------- Render: قائمة العمال ---------------- */
+  var state = { cat: "all", q: "", city: "", availOnly: false };
 
   function renderProviders() {
     var grid = $("#provGrid");
     if (!grid) return;
     var all = D.providers.concat(approvedProviders());
-    var ST_LABEL = { active: "متاح الآن", busy: "مشغول حالياً — هيرجع متاح", inactive: "غير متاح مؤقتاً" };
+    var ST_LABEL = { active: "نشط — متاح الآن", busy: "مشغول حالياً", inactive: "غير نشط" };
     grid.innerHTML = all.map(function (p) {
       var st = statusOf(p);
-      var rateHtml = p.rating
-        ? '<span class="prov__rate"><span class="stars">' + starStr(p.rating) + "</span> " + p.rating.toFixed(1) + ' <span class="rev">(' + p.reviews + " تقييم)</span></span>"
-        : '<span class="prov__rate prov__rate--new">✦ مزود جديد — اعتماد حديث</span>';
-      var firstJob = p.jobs ? p.jobs.split("•")[0].trim() : "مقدم خدمة";
-      var stHtml = '<span class="status-dot st--' + st + '" title="الحالة تحدّثها الإدارة لحظياً"><i></i> ' + (ST_LABEL[st] || ST_LABEL.active) + "</span>";
-      var bookBtn = st === "inactive"
-        ? '<button class="btn btn--gold btn--sm" style="flex:1" disabled title="هذا المزود غير متاح حالياً">غير متاح حالياً</button>'
-        : '<button class="btn btn--gold btn--sm" style="flex:1" data-book-prov="' + p.id + '">⚡ اطلب الآن</button>';
+      var stHtml = '<span class="status-dot st--' + st + '" title="الحالة تحدّثها الإدارة أوتوماتيكياً"><i></i> ' + (ST_LABEL[st] || ST_LABEL.active) + "</span>";
+      var newBadge = p.isNew ? '<span class="badge badge--new">✨ جديد — اعتمدته الإدارة</span>' : "";
+      var contact =
+        '<a class="btn btn--call btn--sm" href="' + telHref(p.phone) + '" data-call="' + p.id + '" aria-label="اتصال هاتفي مباشر بـ ' + p.name + '">📞 اتصال فوري</a>' +
+        '<a class="btn btn--wa btn--sm" href="' + waHref(p.wa || p.phone) + '" target="_blank" rel="noopener" data-wa="' + p.id + '" aria-label="دردشة واتساب مع ' + p.name + '">✆ واتساب</a>';
       return (
-        '<article class="prov gold-frame' + (p.isNew ? " prov--new" : "") + ' prov--' + st + '" data-status="' + st + '" data-cat="' + p.cat + '" data-rating="' + (p.rating || 0) + '" data-reviews="' + p.reviews + '" data-name="' + (p.name + " " + p.sub + " " + p.jobs + " " + p.area).toLowerCase() + '">' +
+        '<article class="prov gold-frame' + (p.isNew ? " prov--new" : "") + ' prov--' + st + '" data-status="' + st + '" data-cat="' + p.cat + '" data-name="' + (p.name + " " + p.sub + " " + p.jobs + " " + p.area).toLowerCase() + '">' +
         '  <div class="prov__top">' +
         '    <div class="prov__avatar">' + p.emoji + "</div>" +
         "    <div>" +
@@ -319,12 +321,9 @@
         '      <div class="prov__cat">' + p.sub + " • " + p.area + "</div>" +
         "    </div>" +
         "  </div>" +
-        '  <div class="prov__badges">' + badgeHtml(p.badge) + '<span class="badge">' + firstJob + "</span></div>" +
-        '  <div class="prov__meta">' + rateHtml + "</div>" +
+        '  <div class="prov__badges">' + newBadge + '<span class="badge">🛠️ ' + p.jobs + "</span></div>" +
         '  <div class="prov__meta">' + stHtml + "</div>" +
-        '  <div class="prov__foot">' + bookBtn +
-        '    <button class="btn btn--ghost btn--sm" data-wa="' + encodeURIComponent(p.name) + '" aria-label="واتساب">✆</button>' +
-        "  </div>" +
+        '  <div class="prov__foot prov__contact">' + contact + "</div>" +
         "</article>"
       );
     }).join("");
@@ -343,9 +342,10 @@
       c.classList.toggle("hide", !(okCat && okQ && okCity && okAvail));
       return okCat && okQ && okCity && okAvail;
     });
+    /* النشط أولاً، ثم المشغول، ثم غير النشط */
+    var ORDER = { active: 0, busy: 1, inactive: 2 };
     list.sort(function (a, b) {
-      if (state.sort === "reviews") return (+b.dataset.reviews) - (+a.dataset.reviews);
-      return (+b.dataset.rating) - (+a.dataset.rating);
+      return (ORDER[a.getAttribute("data-status")] || 0) - (ORDER[b.getAttribute("data-status")] || 0);
     });
     list.forEach(function (c) { $("#provGrid").appendChild(c); });
     $("#provEmpty").classList.toggle("show", list.length === 0);
@@ -361,7 +361,6 @@
     });
     citySel.addEventListener("change", function (e) { state.city = e.target.value; applyFilters(); });
     $("#provQ").addEventListener("input", function (e) { state.q = e.target.value; applyFilters(); });
-    $("#provSort").addEventListener("change", function (e) { state.sort = e.target.value; applyFilters(); });
     $$("#filterChips .chip[data-filter]").forEach(function (ch) {
       ch.addEventListener("click", function () {
         $$("#filterChips .chip").forEach(function (x) { x.classList.remove("active"); });
@@ -381,21 +380,21 @@
         applyFilters();
       });
     }
-    // footer deep-links
-    $$("[data-goto-cat]").forEach(function (a) {
-      a.addEventListener("click", function () {
-        var cat = a.getAttribute("data-goto-cat");
-        setTimeout(function () {
-          $$("#filterChips .chip").forEach(function (x) {
-            x.classList.toggle("active", x.getAttribute("data-filter") === cat);
-          });
-          state.cat = cat;
-          state.availOnly = false;
-          applyFilters();
-        }, 350);
-      });
+    /* ضغطة على أي قسم (كارت أو رابط أو فوتر) → قائمة عمال القسم مباشرة */
+    document.addEventListener("click", function (e) {
+      var el = e.target.closest("[data-goto-cat]");
+      if (!el) return;
+      if (el.tagName === "A") e.preventDefault();
+      gotoCategory(el.getAttribute("data-goto-cat"));
     });
-    /* انعكاس لحظي: تغيير حالة المزود من تبويب الأدمن بيُحدّث الكروت هنا فوراً */
+    document.addEventListener("keydown", function (e) {
+      if (e.key !== "Enter" && e.key !== " ") return;
+      var el = e.target.closest && e.target.closest(".svc-card[data-goto-cat]");
+      if (!el) return;
+      e.preventDefault();
+      gotoCategory(el.getAttribute("data-goto-cat"));
+    });
+    /* انعكاس لحظي: تغيير حالة العامل من تبويب الأدمن بيُحدّث الكروت هنا فوراً */
     window.addEventListener("storage", function (e) {
       if (e.key === LS_PSTATUS || e.key === LS_JOINS) renderProviders();
     });
@@ -433,84 +432,25 @@
         x.classList.toggle("active", x.getAttribute("data-filter") === state.cat);
       });
       $("#provQ").value = state.q;
+      applyFilters();
       document.getElementById("providers").scrollIntoView({ behavior: "smooth" });
     });
     $$("#heroChips .chip").forEach(function (ch) {
       ch.addEventListener("click", function () {
         var v = ch.getAttribute("data-chip");
         var cat = v === "delivery" ? "delivery" : v === "cranes" ? "cranes" : v === "cleaning" ? "lifestyle" : "maintenance";
-        state.cat = cat;
         state.q = "";
         $("#heroQ").value = "";
-        $$("#filterChips .chip").forEach(function (x) {
-          x.classList.toggle("active", x.getAttribute("data-filter") === cat);
-        });
+        $("#provQ").value = "";
         ch.classList.add("active");
         setTimeout(function () { ch.classList.remove("active"); }, 900);
-        document.getElementById("providers").scrollIntoView({ behavior: "smooth" });
+        gotoCategory(cat);
       });
     });
   }
 
-  /* ---------------- Booking modal ---------------- */
-  var modal = $("#bookModal");
-  var formView = $("#bookFormView");
-  var successView = $("#bookSuccess");
-  var fCat = $("#fCat");
-
+  /* ---------------- Helpers ---------------- */
   function catById(id) { return D.categories.filter(function (c) { return c.id === id; })[0]; }
-
-  function openModal(catId) {
-    formView.style.display = "block";
-    successView.classList.remove("show");
-    if (fCat.options.length === 0) {
-      fCat.innerHTML = '<option value="">— اختار الخدمة —</option>' +
-        D.categories.map(function (c) { return '<option value="' + c.id + '">' + c.icon + " " + c.name + "</option>"; }).join("");
-      // sub-services
-      buildSubservices("");
-    }
-    if (catId && catById(catId)) {
-      fCat.value = catId;
-      buildSubservices(catId);
-    }
-    modal.classList.add("modal--open");
-    document.body.style.overflow = "hidden";
-    setTimeout(function () { $("#fService").focus(); }, 350);
-  }
-  function closeModal() {
-    modal.classList.remove("modal--open");
-    document.body.style.overflow = "";
-  }
-
-  function buildSubservices(catId) {
-    var c = catById(catId);
-    var sub = $("#fService");
-    if (c) {
-      sub.value = "";
-      sub.placeholder = "مثال: " + c.services[0];
-      sub.setAttribute("list", "");
-      var dl = document.getElementById("svcDatalist");
-      if (!dl) {
-        dl = document.createElement("datalist");
-        dl.id = "svcDatalist";
-        document.body.appendChild(dl);
-      }
-      dl.innerHTML = c.services.map(function (s) { return '<option value="' + s + '">'; }).join("");
-      sub.setAttribute("list", "svcDatalist");
-    }
-  }
-  fCat.addEventListener("change", function () { buildSubservices(fCat.value); });
-
-  function loadRequests() {
-    try { return JSON.parse(localStorage.getItem(LS_REQUESTS) || "[]"); } catch (e) { return []; }
-  }
-  function saveRequests(list) { localStorage.setItem(LS_REQUESTS, JSON.stringify(list)); }
-
-  function nextReqId() {
-    var n = parseInt(localStorage.getItem("elhani_req_seq") || "1041", 10) + 1;
-    localStorage.setItem("elhani_req_seq", String(n));
-    return "EHN-" + n;
-  }
 
   function validateField(el, ok, wrap) {
     wrap = wrap || el.closest(".field");
@@ -518,104 +458,13 @@
     return ok;
   }
 
-  function submitBooking(e) {
-    e.preventDefault();
-    var cat = fCat;
-    var service = $("#fService");
-    var name = $("#fName");
-    var phone = $("#fPhone");
-    var city = $("#fCity");
-    var addr = $("#fAddr");
-
-    var ok = true;
-    ok = validateField(cat, !!cat.value) && ok;
-    ok = validateField(service, service.value.trim().length >= 3) && ok;
-    ok = validateField(name, name.value.trim().length >= 3) && ok;
-    ok = validateField(phone, /^01[0-9]{9}$/.test(phone.value.trim())) && ok;
-    ok = validateField(city, !!city.value) && ok;
-    ok = validateField(addr, addr.value.trim().length >= 5) && ok;
-    if (!ok) { toast("err", "راجع البيانات", "في حقل أو أكتر محتاجين تصحيح"); return; }
-
-    var c = catById(cat.value);
-    var req = {
-      id: nextReqId(),
-      ts: Date.now(),
-      cat: cat.value,
-      catName: c ? c.name : cat.value,
-      service: service.value.trim(),
-      name: name.value.trim(),
-      phone: phone.value.trim(),
-      city: city.value,
-      address: addr.value.trim(),
-      time: $("#fTime").value,
-      notes: $("#fNotes").value.trim(),
-      amount: c ? c.priceFrom : 0,
-      status: "pending"
-    };
-    var list = loadRequests();
-    list.unshift(req);
-    saveRequests(list);
-
-    formView.style.display = "none";
-    $("#reqId").textContent = req.id;
-    successView.classList.add("show");
-    toast("ok", "طلبك اتسجّل ✅", "رقم الطلب " + req.id);
-    $("#bookForm").reset();
-    fCat.value = "";
-    buildSubservices("");
-  }
-
   function populateCitySelect(sel) {
     sel.innerHTML = '<option value="">— اختار مركزك من الشرقية —</option>' +
       D.cities.map(function (c) { return '<option value="' + c + '">' + c + "</option>"; }).join("");
   }
 
-  function initBooking() {
-    populateCitySelect($("#fCity"));
-    populateCitySelect($("#jCity"));
-    var jCat = $("#jCat");
-    jCat.innerHTML = '<option value="">— اختار النوع —</option>' +
-      D.categories.map(function (c) { return '<option value="' + c.id + '">' + c.icon + " " + c.name + "</option>"; }).join("");
-    $$("[data-book]").forEach(function (b) {
-      b.addEventListener("click", function (e) { e.preventDefault(); openModal(null); });
-    });
-    $$("[data-book-cat]").forEach(function (b) {
-      b.addEventListener("click", function (e) { e.preventDefault(); openModal(b.getAttribute("data-book-cat")); });
-    });
-    document.addEventListener("click", function (e) {
-      var bp = e.target.closest("[data-book-prov]");
-      if (bp) {
-        e.preventDefault();
-        var p = D.providers.concat(approvedProviders()).filter(function (x) { return x.id === bp.getAttribute("data-book-prov"); })[0];
-        openModal(p ? p.cat : null);
-        if (p) {
-          var s = $("#fService");
-          s.value = "طلب من مزود: " + p.name;
-        }
-      }
-      var wa = e.target.closest("[data-wa]");
-      if (wa) {
-        e.preventDefault();
-        window.open(ADMIN_WA + "?text=" + wa.getAttribute("data-wa") + " — عندي طلب عبر منصة الحقني", "_blank");
-      }
-    });
-    $$("[data-close]", modal).forEach(function (b) { b.addEventListener("click", closeModal); });
-    document.addEventListener("keydown", function (e) {
-      if (e.key !== "Escape") return;
-      if (modal.classList.contains("modal--open")) closeModal();
-      if (joinModal.classList.contains("modal--open")) closeJoinModal();
-    });
-    $("#bookForm").addEventListener("submit", submitBooking);
-    // live validation
-    ["#fService", "#fName", "#fPhone", "#fAddr", "#jWa"].forEach(function (sel) {
-      var el = $(sel);
-      if (!el) return;
-      el.addEventListener("input", function () { el.closest(".field").classList.remove("invalid"); });
-    });
-  }
-
   /* ---------------- Join modal (provider onboarding request) ----------------
-     لا يتم تفعيل أي نشاط أو ظهوره على المنصة إلا بعد موافقة الأدمن. */
+     لا يتم تفعيل أي نشاط أو ظهوره على الدليل إلا بعد موافقة الأدمن. */
   var joinModal = $("#joinModal");
   var joinFormView = $("#joinFormView");
   var joinSuccessView = $("#joinSuccess");
@@ -629,7 +478,7 @@
   }
   function closeJoinModal() {
     joinModal.classList.remove("modal--open");
-    if (!modal.classList.contains("modal--open")) document.body.style.overflow = "";
+    document.body.style.overflow = "";
   }
 
   function submitJoin(e) {
@@ -671,11 +520,23 @@
   }
 
   function initJoin() {
+    populateCitySelect($("#jCity"));
+    var jCat = $("#jCat");
+    jCat.innerHTML = '<option value="">— اختار القسم —</option>' +
+      D.categories.map(function (c) { return '<option value="' + c.id + '">' + c.icon + " " + c.name + "</option>"; }).join("");
     $$("[data-join]").forEach(function (b) {
       b.addEventListener("click", function (e) { e.preventDefault(); openJoinModal(); });
     });
     $$("[data-close]", joinModal).forEach(function (b) { b.addEventListener("click", closeJoinModal); });
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape" && joinModal.classList.contains("modal--open")) closeJoinModal();
+    });
     $("#joinForm").addEventListener("submit", submitJoin);
+    ["#jName", "#jPhone", "#jJobs", "#jWa"].forEach(function (sel) {
+      var el = $(sel);
+      if (!el) return;
+      el.addEventListener("input", function () { el.closest(".field").classList.remove("invalid"); });
+    });
   }
 
   /* ---------------- Toasts ---------------- */
@@ -707,7 +568,6 @@
     initParticles();
     initProviderTools();
     initHeroSearch();
-    initBooking();
     initJoin();
     onScroll();
   });

@@ -1,0 +1,7 @@
+# الحقني - دليل الخدمات المباشر بالشرقية
+# ملاحظة: استبدل https://elhani.eg بالدومين الفعلي عند النشر
+User-agent: *
+Allow: /
+Disallow: /admin.html
+
+Sitemap: https://elhani.eg/sitemap.xml

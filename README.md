@@ -1,45 +1,47 @@
 # الحَقني — Elha'ni 🏆
 ### The Complete Brand Ecosystem & Platform Codebase
 
-> **«الحَقَّني»… يعني خلّصناها في دقائق!**
-> *Mashhad El-Sharqia's hyper-fast local services platform — delivery, cranes, emergency maintenance & lifestyle — in one place.*
+> **«الحَقَّني»… كلم العامل مباشرة من غير وسيط!**
+> *Sharqia's direct, interactive service directory — delivery, cranes, emergency maintenance & lifestyle. Pick a category → see the workers → call or WhatsApp them instantly. No orders, no prices, no middleman.*
 
 ## 📍 Geographic Scope — محافظة الشرقية ONLY
 Every provider, seed order, testimonial, ticker item, city filter, and form select is restricted to Sharqia Governorate:
 **الزقازيق • العاشر من رمضان • بلبيس • منيا القمح • ديرب نجم • أبو حماد • ههيا • فاقوس • حماطة • تلة أبا • القنايات • نقطة الشرقية • أبو بكر الصديق • أبو كبير • سيد زرين**
 (The list lives in `ELHANI_DATA.cities` in `js/data.js` — add/remove a center in one place and every select updates.)
 
-## 🎛 Provider Status Control (admin-only, live)
-Each provider on the platform has a live status managed **only** from the admin dashboard (المزودون tab — quick 3-button control per row):
+## 🎛 Worker Status Control (admin-only, live)
+Each worker on the directory has a live status managed **only** from the admin dashboard (العمال والحالات tab — quick 3-button control per row, also on the overview):
 
-| Status | Card on the site | Booking |
+| Status | Card on the site | Contact buttons |
 |---|---|---|
-| 🟢 نشط (`active`) | Green pulsing "متاح الآن" | Enabled |
-| 🔴 مشغول (`busy`) | Red pulsing "مشغول حالياً — هيرجع متاح" | Enabled (queue) |
-| ⚫ غير نشط (`inactive`) | Dimmed card, "غير متاح مؤقتاً" | Disabled |
+| 🟢 نشط (`active`) | Green pulsing "نشط — متاح الآن" | 📞 + ✆ enabled |
+| 🔴 مشغول (`busy`) | Red pulsing "مشغول حالياً" | 📞 + ✆ enabled |
+| ⚫ غير نشط (`inactive`) | Dimmed card, "غير نشط" | Dimmed/disabled |
 
 - Changes are written to `elhani_provider_status_v1` and **reflected instantly**: the landing page listens to the browser `storage` event, so changing a status in the admin tab updates the customer-facing card in the other tab immediately (no reload).
 - The old boolean switch storage auto-migrates (`active`/`inactive`) on first boot.
-- Customers can also toggle the **🟢 المتاح الآن فقط** chip in the providers toolbar to see only available providers.
+- Customers can also toggle the **🟢 المتاح الآن فقط** chip in the workers toolbar to see only available workers.
 - The dashboard, its buttons, and the admin gate remain strictly admin-only.
 
-## 💰 Pricing Policy — Zero Prices on the Public Site
-The customer-facing interface contains **no prices, price ranges, or budget fields at all**:
-- Provider cards show only: name ✓, specialty, rating, **live status** (🟢/🔴/⚫), and direct **Book / Call** buttons.
-- Service cards have no "يبدأ من …" price blocks.
-- The booking form has no budget field; sorting is by rating / orders only (no price sort).
-- Pricing remains an **internal admin tool** (minimum-price settings + estimated revenue in the dashboard) and is never displayed to customers.
+## 🚫 No Orders, No Prices — Direct Directory Model
+The old booking system was removed entirely. The customer-facing interface contains:
+- **No "اطلب الآن" buttons**, no booking modal/forms, no order IDs, no request storage.
+- **No prices at all** — no "يبدأ من …", no ج.م, no budget fields, no price sorting. The admin pricing panel was removed too.
+- **Worker cards show only:** name ✓ + exact specialty, **live status** (🟢 نشط / 🔴 مشغول / ⚫ غير نشط, auto-synced from the admin dashboard), and two very clear contact buttons:
+  - **📞 اتصال فوري** → `tel:+20xxxxxxxxxx` (the worker's own mobile)
+  - **✆ واتساب** → `https://wa.me/20xxxxxxxxxx` (opens a direct WhatsApp chat with the worker)
+- Clicking any main category (services grid, hero chips, footer links) jumps **directly to the filtered workers list** for that category — no intermediate page.
 
-## 📞 Single Admin Number
-All emergency buttons, call links, WhatsApp deep-links, tooltips, and footer contacts point exclusively to the admin number:
-**0122 599 0584** (`tel:+201225990584` / `https://wa.me/201225990584`), centralized in `ADMIN_TEL` / `ADMIN_WA` constants in `js/app.js`.
+## 📞 Numbers
+- **Each worker card** carries the worker's own `phone` / `wa` (defined per provider in `js/data.js`; approved join requests use the number the applicant submitted).
+- The **emergency/admin channels** (nav 🚨, FAB, footer, CTA band) point to the admin number: **0122 599 0584** (`tel:+201225990584` / `https://wa.me/201225990584`).
 
 ## 🤝 Provider Onboarding — Approval Gate (no instant activation)
 Regular users **cannot** add services or activities to the platform. The only path is:
 1. **«انضم إلينا»** section / button → join modal (name, phone, activity type, specialty, Sharqia center, notes)
 2. Request saved to `elhani_join_requests_v1` with `status: "pending"` — **never rendered on the public site**
 3. Admin reviews it in **لوحة التحكم ← طلبات الانضمام** (tabs: pending / approved / rejected)
-4. **Approve** → the provider instantly appears on the landing page (verified ✓, "جديد — اعتمدته الإدارة" badge, bookable) — **Reject** → archived, stays hidden
+4. **Approve** → the worker instantly appears on the landing page (verified ✓, "جديد — اعتمدته الإدارة" badge, with direct 📞/✆ buttons on their own number) — **Reject** → archived, stays hidden
 5. Admins can reverse a decision at any time; approvals are persisted in localStorage
 
 **Run it:** any static server in this folder:
@@ -63,7 +65,7 @@ elhani/
 ├── js/
 │   ├── data.js         ← Platform data (services, providers, testimonials)
 │   ├── auth.js         ← SHA-256 checkpoint + session & lockout engine
-│   ├── app.js          ← Landing logic (particles, filters, booking)
+│   ├── app.js          ← Landing logic (particles, filters, direct contact)
 │   └── admin.js        ← Dashboard logic (views, stats, CRUD)
 └── assets/
     ├── logo-mark.png   ← AI-generated gold emblem (the "bolt-wing shield")
@@ -105,7 +107,7 @@ python3 -m http.server 8000
 
 ### Voice & Tone
 Egyptian-confident, fast, slightly witty. Short sentences. "الحق" energy:
-*«اطلب… وإحنا نتحرك.»* — never corporate-stiff, always human.
+*«كلم العامل… على طول.»* — never corporate-stiff, always human.
 
 ---
 
@@ -146,26 +148,22 @@ A metallic-gold lightning bolt (speed) fused with forward-leaning wings (motion,
 - Canvas particle field (gold/cyan dust, DPR-capped, pause on tab-hide)
 - Fixed glass nav that compresses on scroll + scroll-spy highlighting
 - Hero with live search (input + category select) & quick-filter chips
-- Infinite "live orders" ticker marquee (pause on hover)
+- Infinite live availability ticker marquee (pause on hover)
 - Animated stat counters (IntersectionObserver-triggered)
-- 4 service pillars with image zoom, gold borders, per-category booking
-- 3-step "How it works" with rotating conic number rings
-- **Provider directory:** text search + **Sharqia center filter** + category chips + sort (rating / orders), verified badges, ratings, **live status** (🟢 متاح / 🔴 مشغول / ⚫ غير متاح), book + WhatsApp CTAs, graceful empty state — **no prices anywhere**
-- **Join-us section + modal**: provider onboarding via admin-approval gate (see above)
-- Testimonials, 24/7 CTA band, **🚨 emergency button (0122 599 0584)**, full footer, floating WhatsApp/Call/Back-to-top (all on the admin number)
-- **Booking modal:** full validation (Egyptian phone `01xxxxxxxxx`), Egyptian-localized errors, live re-validation, success state with order ID (`EHN-xxxx`)
-- All requests persist to `localStorage` → instantly visible in the admin dashboard
+- 4 category pillars — **clicking a category jumps straight to its filtered workers list**
+- 3-step "How it works" (اختار القسم ← شوف المتاح 🟢 ← كلمه فوراً) with rotating conic number rings
+- **Workers directory:** text search + **Sharqia center filter** + category chips, verified badges, **live status** (🟢 نشط / 🔴 مشغول / ⚫ غير نشط), active-first ordering, and per-worker **📞 tel: + ✆ wa.me buttons** — **no prices, no booking, no ratings clutter**
+- **Join-us section + modal**: worker onboarding via admin-approval gate (see above)
+- Testimonials, 24/7 CTA band, **🚨 emergency button (0122 599 0584)**, full footer, floating WhatsApp/Call/Back-to-top (emergency channels on the admin number)
 - Ripple buttons, toast system, RTL-perfect layout, `prefers-reduced-motion` respected
 
 ### Admin (`admin.html`)
 - **Secure gate:** master password verified via **SHA-256 hash comparison** (plain text never stored), brute-force lockout (5 fails → 30 s), show/hide password, "remember me" (30 days vs 12 h session)
 - **Session engine:** token in `localStorage` with TTL, live expiry watcher (auto-logout), clean lockout
-- **Overview:** 5 KPI cards (incl. pending join requests), 7-day bar chart, latest orders feed, per-service distribution bars
-- **Requests:** status tabs, full table, inline status changes (pending → active → done / cancelled), delete with confirm — all persisted
-- **Join requests (طلبات الانضمام):** live review queue with pending-approval badge in the sidebar, approve (activates the provider on the site instantly) / reject with confirmation, status tabs
-- **Providers:** activate/deactivate switches (persisted)
-- **Services:** edit minimum price per category (persisted)
-- **Settings:** session info, demo-data reseed, full wipe
+- **Overview:** 5 KPI cards (workers total, 🟢/🔴/⚫ counts, pending joins), per-category worker distribution bars, latest join requests feed, and a quick status-control table
+- **Join requests (طلبات الانضمام):** live review queue with pending-approval badge in the sidebar, approve (shows the worker's card + contact buttons on the site instantly) / reject with confirmation, status tabs
+- **Workers (العمال والحالات):** full table with the worker's own 📞/✆ links and the 3-state live status control (reflected instantly on the site)
+- **Settings:** session info, one-click "reset all workers to 🟢 نشط"
 - Arabic RTL throughout, same Midnight Gold system
 
 ### Security notes (honest engineering)
@@ -175,7 +173,7 @@ A metallic-gold lightning bolt (speed) fused with forward-leaning wings (motion,
 ---
 
 ## 🧪 Testing
-`e2e.test.js` is a full jsdom end-to-end suite (50+ assertions) covering: Sharqia-only provider scope, city filters, the admin number on every contact link, booking validation (incl. required center) + persistence, the full join-request → admin-approval → public-activation loop, landing rendering, provider search/sort, admin login (wrong + exact master password), session lifecycle, dashboard stats/chart, request status changes, provider toggles, price edits, and logout.
+`e2e.test.js` is a full jsdom end-to-end suite (85+ assertions) covering: Sharqia-only worker scope, RTL, the total removal of orders/prices ("اطلب الآن", booking modal, ج.م — all gone), per-worker `tel:`/`wa.me` buttons (own numbers, not the admin's), direct category→workers navigation (service cards + footer links), city/availability filters, live status sync via `storage` events, the full join-request → admin-approval → public-card loop, admin login (wrong + exact master password), session lifecycle, worker status controls from both overview and workers views, the status reset action, and logout.
 ```bash
 npm install jsdom && node e2e.test.js
 ```
