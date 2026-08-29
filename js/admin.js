@@ -87,13 +87,6 @@
   }
   function defaultStatusFor(p) { return p.isJoin ? "active" : (p.active ? "active" : "inactive"); }
   function statusOf(p) { return loadPStatus()[p.id] || defaultStatusFor(p); }
-  function seedPStatus() {
-    if (localStorage.getItem("elhani_pstatus_seeded_v1")) return;
-    var s = loadPStatus();
-    if (!s.p09) s.p09 = "busy";
-    savePStatus(s);
-    localStorage.setItem("elhani_pstatus_seeded_v1", "1");
-  }
   /* كل عمال الدليل: الأساسيون + المعتمدون من طلبات الانضمام */
   function allPlatformProviders() {
     var joins = loadJoins().filter(function (j) { return j.status === "approved"; }).map(function (j) {
@@ -103,23 +96,21 @@
         sub: j.jobs ? j.jobs.split("•")[0].trim() : "مقدم خدمة",
         jobs: j.jobs || "", area: (j.city || "الشرقية") + " — الشرقية",
         phone: j.phone || "", wa: j.wa || j.phone || "",
+        paid: j.paid === true,
         active: true, isJoin: true
       };
     });
     return D.providers.concat(joins);
   }
 
-  /* ---------------- Seed demo join requests (first run only) ---------------- */
-  function seed() {
-    if (localStorage.getItem("elhani_join_seeded_v1")) return;
-    var now = Date.now(), H = 3600 * 1000;
-    var joins = [
-      { id: "JN-501", ts: now - 26 * H, name: "توصيل بلبيس السريعة", phone: "01199988877", cat: "delivery", catName: catName("delivery"), jobs: "توصيل فوري • مشاوير • مستندات", city: "بلبيس", wa: "01199988877", notes: "فريق من 4 سكرتير، جاهزين نبدأ فور الاعتماد.", status: "approved" },
-      { id: "JN-502", ts: now - 6 * H, name: "سباك حسن أبو علي", phone: "01088877766", cat: "maintenance", catName: catName("maintenance"), jobs: "سباكة عامة • سخانات • محارة مياه", city: "أبو حماد", wa: "", notes: "خبرة 12 سنة، أخدم كل مراكز الشرقية.", status: "pending" }
-    ];
-    saveJoins(joins);
-    localStorage.setItem("elhani_join_seeded_v1", "1");
-    if (!localStorage.getItem(LS_JOIN_SEQ)) localStorage.setItem(LS_JOIN_SEQ, "502");
+  /* ---------------- إزالة بيانات الانضمام الوهمية القديمة (مرة واحدة) ----------------
+     النسخ القديمة كانت بتزرع طلبات وهمية (JN-501 / JN-502) — الشيل دي بتمسحها
+     من متصفح أي زائر قديم، ومفيش أي بيانات وهمية بتتزرع بعد كده. */
+  function purgeFakeJoins() {
+    if (localStorage.getItem("elhani_fake_joins_purged_v1")) return;
+    var FAKES = ["JN-501", "JN-502"];
+    saveJoins(loadJoins().filter(function (j) { return FAKES.indexOf(j.id) === -1; }));
+    localStorage.setItem("elhani_fake_joins_purged_v1", "1");
   }
 
   /* ---------------- AUTH GATE ---------------- */
@@ -376,6 +367,116 @@
     });
   }
 
+  /* ===== الحالة المالية للعامل: مدفوع 💵 / لم يُدفع ⏳ =====
+     بتظهر كعمود في جدول العمال — ضغطة واحدة على العلامة بتقلب الحالة. */
+  var PAY_META = {
+    paid:   { label: "💵 مدفوع",    pill: "pill--paid" },
+    unpaid: { label: "⏳ لم يُدفع", pill: "pill--unpaid" }
+  };
+  function paidOf(p) { return p.paid === true ? "paid" : "unpaid"; }
+  function payPill(p) {
+    var st = paidOf(p);
+    return '<button class="pill ' + PAY_META[st].pill + ' pay-toggle" data-pay="' + p.id + '" title="اضغط لتغيير الحالة المالية (مدفوع / لم يُدفع)">' + PAY_META[st].label + "</button>";
+  }
+  function bindPayToggles(scope) {
+    $$(scope + " .pay-toggle").forEach(function (b) {
+      b.addEventListener("click", function () {
+        var id = b.getAttribute("data-pay");
+        var list = loadJoins();
+        var j = list.filter(function (x) { return x.id === id; })[0];
+        if (!j) { toast("err", "مش متاح", "الحالة المالية بتتحدد للعمال المضافين عبر المنصة أو اللوحة"); return; }
+        j.paid = j.paid !== true;
+        saveJoins(list);
+        renderAll();
+        toast("ok", "تم تحديث الحالة المالية ✓", j.name + " ← " + PAY_META[paidOf(j)].label);
+      });
+    });
+  }
+
+  /* ---------------- إضافة عامل/موظف جديد (نموذج اللوحة) ----------------
+     بيتسجل معتمدًا فورًا بنفس مخزن طلبات الانضمام → يظهر تلقائيًا على الموقع،
+     ومعاه القسم التابع ليه والحالة المالية. */
+  var workerModal = $("#workerModal");
+  var workerForm = $("#workerForm");
+
+  function nextWorkerId() {
+    var n = parseInt(localStorage.getItem(LS_JOIN_SEQ) || "503", 10) + 1;
+    localStorage.setItem(LS_JOIN_SEQ, String(n));
+    return "JN-" + n;
+  }
+
+  function openWorkerModal() {
+    workerForm.reset();
+    $$("#workerForm .field").forEach(function (f) { f.classList.remove("invalid"); });
+    workerModal.classList.add("modal--open");
+    setTimeout(function () { var el = $("#wName"); if (el) el.focus(); }, 350);
+  }
+  function closeWorkerModal() {
+    workerModal.classList.remove("modal--open");
+  }
+
+  function validateW(el, ok) {
+    var wrap = el.closest(".field");
+    if (wrap) wrap.classList.toggle("invalid", !ok);
+    return ok;
+  }
+
+  function submitWorker(e) {
+    e.preventDefault();
+    var name = $("#wName"), phone = $("#wPhone"), cat = $("#wCat"),
+        city = $("#wCity"), jobs = $("#wJobs"), wa = $("#wWa"), paid = $("#wPaid");
+    var ok = true;
+    ok = validateW(name, name.value.trim().length >= 3) && ok;
+    ok = validateW(phone, /^01[0-9]{9}$/.test(phone.value.trim())) && ok;
+    ok = validateW(cat, !!cat.value) && ok;
+    ok = validateW(city, !!city.value) && ok;
+    ok = validateW(jobs, jobs.value.trim().length >= 3) && ok;
+    var waVal = wa.value.trim();
+    ok = validateW(wa, !waVal || /^01[0-9]{9}$/.test(waVal)) && ok;
+    if (!ok) { toast("err", "راجع البيانات", "في حقل أو أكتر محتاجين تصحيح"); return; }
+
+    var rec = {
+      id: nextWorkerId(),
+      ts: Date.now(),
+      name: name.value.trim(),
+      phone: phone.value.trim(),
+      cat: cat.value,
+      catName: catName(cat.value),
+      jobs: jobs.value.trim(),
+      city: city.value,
+      wa: waVal,
+      notes: $("#wNotes").value.trim(),
+      paid: paid.value === "paid",
+      status: "approved", /* معتمد فورًا — يظهر على الدليل مباشرة */
+      src: "admin"
+    };
+    var list = loadJoins();
+    list.unshift(rec);
+    saveJoins(list);
+    closeWorkerModal();
+    renderAll();
+    toast("ok", "تمت إضافة العامل ✓", rec.name + " — ظهر على الدليل فورًا بأزرار الاتصال والواتساب");
+  }
+
+  function initAddWorker() {
+    /* نفس قوائم الأقسام والمراكز المستخدمة على الموقع */
+    $("#wCat").innerHTML = '<option value="">— اختار القسم —</option>' +
+      D.categories.map(function (c) { return '<option value="' + c.id + '">' + c.icon + " " + c.name + "</option>"; }).join("");
+    $("#wCity").innerHTML = '<option value="">— اختار المركز —</option>' +
+      D.cities.map(function (c) { return '<option value="' + c + '">' + c + "</option>"; }).join("");
+    $("#addWorkerBtn").addEventListener("click", function (e) { e.preventDefault(); openWorkerModal(); });
+    $$("[data-wclose]").forEach(function (b) { b.addEventListener("click", closeWorkerModal); });
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape" && workerModal.classList.contains("modal--open")) closeWorkerModal();
+    });
+    workerForm.addEventListener("submit", submitWorker);
+    ["#wName", "#wPhone", "#wJobs", "#wWa"].forEach(function (sel) {
+      var el = $(sel);
+      if (!el) return;
+      el.addEventListener("input", function () { el.closest(".field").classList.remove("invalid"); });
+    });
+  }
+
   /* ---------------- Workers (status control) ---------------- */
   function renderProviders() {
     var body = $("#provBody");
@@ -390,11 +491,13 @@
         "<td>" + p.area + "</td>" +
         "<td>" + tel + "</td>" +
         "<td>" + wa + "</td>" +
+        "<td>" + payPill(p) + "</td>" +
         '<td><span class="pill ' + meta.pill + '">' + meta.label + "</span></td>" +
         '<td><div class="status-btns">' + statusButtons(p, st) + "</div></td>" +
         "</tr>";
     }).join("");
     bindStatusButtons("#provBody");
+    bindPayToggles("#provBody");
   }
 
   /* ---------------- Settings actions ---------------- */
@@ -424,11 +527,11 @@
 
   /* ---------------- Boot ---------------- */
   document.addEventListener("DOMContentLoaded", function () {
-    seed();
+    purgeFakeJoins();
     migrateOldProviderState();
-    seedPStatus();
     initAuth();
     initSettings();
+    initAddWorker();
     $$("#sideNav .side__item").forEach(function (b) {
       b.addEventListener("click", function () { switchView(b.getAttribute("data-view")); });
     });

@@ -170,10 +170,11 @@
             <div class="panel__head">
               <h3>👷 إدارة العمال ومقدمي الخدمات</h3>
               <span class="panel__hint">نشط 🟢 / مشغول 🔴 / غير نشط ⚫ — ينعكس فوراً على الموقع</span>
+              <button class="btn btn--gold btn--sm" id="addWorkerBtn">＋ إضافة عامل جديد</button>
             </div>
             <div class="table-wrap">
               <table class="table">
-                <thead><tr><th>العامل</th><th>التخصص</th><th>المنطقة</th><th>اتصال</th><th>واتساب</th><th>الحالة</th><th>التحكم السريع</th></tr></thead>
+                <thead><tr><th>العامل</th><th>التخصص</th><th>المنطقة</th><th>اتصال</th><th>واتساب</th><th>الحالة المالية</th><th>الحالة</th><th>التحكم السريع</th></tr></thead>
                 <tbody id="provBody"></tbody>
               </table>
             </div>
@@ -212,6 +213,68 @@
         </section>
       </div>
     </main>
+  </div>
+
+  <!-- ===== نافذة إضافة عامل/موظف جديد ===== -->
+  <div class="modal" id="workerModal" role="dialog" aria-modal="true" aria-labelledby="workerTitle">
+    <div class="modal__overlay" data-wclose></div>
+    <div class="modal__panel">
+      <div class="modal__head">
+        <h3 class="modal__title" id="workerTitle">إضافة عامل جديد <span class="grad">للدليل</span></h3>
+        <button class="modal__close" data-wclose aria-label="إغلاق">✕</button>
+      </div>
+      <p class="modal__sub">العامل بيتضاف معتمدًا فورًا ويظهر على الموقع بأزرار الاتصال والواتساب — وتقدر تتحكم في حالته وحالته المالية في أي وقت من جدول العمال.</p>
+      <form id="workerForm" novalidate>
+        <div class="form-grid">
+          <div class="field">
+            <label for="wName">اسم العامل / النشاط <b>*</b></label>
+            <input type="text" id="wName" placeholder="مثال: توصيل الزقازيق السريع">
+            <span class="err-msg">اكتب اسم العامل (3 أحرف على الأقل)</span>
+          </div>
+          <div class="field">
+            <label for="wPhone">رقم الموبايل (اتصال مباشر) <b>*</b></label>
+            <input type="tel" id="wPhone" inputmode="numeric" placeholder="01xxxxxxxxx" dir="ltr" style="text-align:right">
+            <span class="err-msg">رقم مصري صحيح: 01xxxxxxxxx</span>
+          </div>
+          <div class="field">
+            <label for="wCat">القسم التابع ليه <b>*</b></label>
+            <select id="wCat"></select>
+            <span class="err-msg">اختار القسم</span>
+          </div>
+          <div class="field">
+            <label for="wCity">المركز / المدينة <b>*</b></label>
+            <select id="wCity"></select>
+            <span class="err-msg">اختار المركز من قائمة الشرقية</span>
+          </div>
+          <div class="field field--full">
+            <label for="wJobs">التخصص / الخدمات <b>*</b></label>
+            <input type="text" id="wJobs" placeholder="مثال: توصيل فوري • مشاوير • مستندات">
+            <span class="err-msg">اكتب التخصص (3 أحرف على الأقل)</span>
+          </div>
+          <div class="field">
+            <label for="wWa">رقم واتساب (اختياري)</label>
+            <input type="tel" id="wWa" inputmode="numeric" placeholder="01xxxxxxxxx" dir="ltr" style="text-align:right">
+            <span class="err-msg">رقم غير صحيح</span>
+          </div>
+          <div class="field">
+            <label for="wPaid">الحالة المالية <b>*</b></label>
+            <select id="wPaid">
+              <option value="unpaid" selected>⏳ لم يُدفَع</option>
+              <option value="paid">💵 مدفوع</option>
+            </select>
+            <span class="err-msg">اختار الحالة المالية</span>
+          </div>
+          <div class="field field--full">
+            <label for="wNotes">ملاحظات (اختياري)</label>
+            <textarea id="wNotes" placeholder="أي تفاصيل إضافية عن العامل…"></textarea>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn--gold" style="flex:1">✓ إضافة العامل وإظهاره على الدليل</button>
+          <button type="button" class="btn btn--ghost" data-wclose>إلغاء</button>
+        </div>
+      </form>
+    </div>
   </div>
 
   <div class="toast-wrap" id="toasts" aria-live="polite"></div>
