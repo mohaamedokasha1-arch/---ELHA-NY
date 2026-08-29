@@ -43,6 +43,18 @@ const ADMIN = "01225990584";
   check("العدادات: 4 أقسام / 15 مركز / 24-7 / 100% مراجعة يدوية", counts.join(",") === "4,15,24,100" && !!d.querySelector("#stats .suf"));
   const statsText = d.querySelector("#stats").textContent;
   check("مفيش أرقام ملفقة قديمة (12480 / 850 / تقييم 4.9)", statsText.indexOf("12480") === -1 && statsText.indexOf("850") === -1 && statsText.indexOf("4.9") === -1);
+
+  /* ===== هوية مرحلة الإطلاق ===== */
+  check("بادج «إطلاق جديد» في الهيرو", !!d.querySelector(".hero__badge--launch"));
+  const launch = d.querySelector("#launch");
+  check("بانر «كن من أول العمال في مركزك» موجود", !!launch && !!launch.querySelector(".launch__panel.gold-frame") && launch.textContent.includes("أول العمال"));
+  check("مكان البانر: بين الإحصائيات والأقسام", launch.previousElementSibling.id === "stats" && launch.nextElementSibling.id === "services");
+  check("بانر الإطلاق بأرقام حقيقية بس (15 مركز / 4 أقسام / 24-7)", launch.querySelectorAll(".launch__chip").length === 3 && !/850|14,?327|4\.9/.test(launch.textContent));
+  check("الدليل الفاضي فيه CTA انضمام", !!d.querySelector("#provEmpty [data-join]"));
+  d.querySelector("#launch [data-join]").click();
+  check("زر البانر بيفتح فورم الانضمام", d.querySelector("#joinModal").classList.contains("modal--open"));
+  d.querySelector("#joinModal [data-close]").click();
+  check("وإغلاق المودال شغال برضه", !d.querySelector("#joinModal").classList.contains("modal--open"));
   check("service cards rendered (4)", d.querySelectorAll("#svcGrid .svc-card").length === 4);
   check("NO fake testimonials — section removed", d.querySelector("#reviews") === null && d.querySelector("#testiGrid") === null);
   const tickerItems = [...d.querySelectorAll("#tickerTrack .ticker__item")];
