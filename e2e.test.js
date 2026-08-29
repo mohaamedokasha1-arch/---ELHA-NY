@@ -30,14 +30,84 @@ const ADMIN = "01225990584";
   console.log("\n--- LANDING (index.html) ---");
   const dom = await load("index.html");
   const w = dom.window, d = w.document;
-  await new Promise(r => { w.addEventListener("load", r); setTimeout(r, 4000); });
+  await new Promise(r => { w.addEventListener("load", r); setTimeout(r, 6000); });
   await sleep(300);
 
-  check("providers rendered (14 core + 1 approved join = 15)", d.querySelectorAll("#provGrid .prov").length === 15);
+  /* الدليل الموسّع المولّد (بحد أقصى 55 عامل لكل قسم) — نحسب التوقعات من البيانات نفسها */
+  const EXT = w.ELHANI_EXTRA_PROVIDERS || [];
+  const MAX_PER_CAT = 55;
+  const BASE = 15; // 14 core + 1 approved join
+  const TOTAL = BASE + EXT.length;
+  const EXT_BY_CAT = {};
+  const EXT_BY_CITY = {};
+  EXT.forEach(function (p) {
+    EXT_BY_CAT[p.cat] = (EXT_BY_CAT[p.cat] || 0) + 1;
+    var city = String(p.area || "").split(" — ")[0];
+    EXT_BY_CITY[city] = (EXT_BY_CITY[city] || 0) + 1;
+  });
+  check("بيانات موسّعة موجودة (بحد أقصى 55 لكل قسم)", EXT.length > 0 && Object.keys(EXT_BY_CAT).length === 4 && Object.values(EXT_BY_CAT).every(n => n > 0 && n <= MAX_PER_CAT));
+  check("أعداد الأقسام متفاوتة ومنطقية", new Set(Object.values(EXT_BY_CAT)).size === Object.values(EXT_BY_CAT).length);
+  check("أسماء المولّدين فريدة 100%", new Set(EXT.map(p => p.name)).size === EXT.length);
+  check("أرقام المولّدين فريدة + صيغة مصرية صحيحة", new Set(EXT.map(p => p.phone)).size === EXT.length && EXT.every(p => /^01[0125][0-9]{8}$/.test(p.phone)));
+  check("كل العمال المولّدين جوه الشرقية", EXT.every(p => String(p.area).includes("الشرقية")));
+  check("كل العمال المولّدين جوه الأقسام الموجودة", EXT.every(p => ["delivery", "cranes", "maintenance", "lifestyle"].indexOf(p.cat) !== -1));
+
+  check("providers rendered (الكل = " + TOTAL + ")", d.querySelectorAll("#provGrid .prov").length === TOTAL);
   check("approved join provider visible with new style", d.querySelectorAll("#provGrid .prov--new").length === 1);
   check("approved provider shows 'اعتمدته الإدارة' badge", !!d.querySelector('#provGrid .prov--new .badge--new'));
   check("service cards rendered (4)", d.querySelectorAll("#svcGrid .svc-card").length === 4);
-  check("testimonials rendered (3)", d.querySelectorAll("#testiGrid .testi").length === 3);
+  /* ===== آراء العملاء (Testimonials): 24 رأي + سلايدر + فلتر ===== */
+  const TST = w.ELHANI_TESTIMONIALS || { items: [] };
+  const TST_P = TST.items;
+  const TST_WORDS = /(سرعة|سريع|أسرع|أمانة|أمين|صدق|بصراحة|الحقيقة|دقة|محترم|شفاف|ثقة)/;
+  const clickSel = sel => { const el = d.querySelector(sel); if (!el) return false; el.click(); return true; };
+  check("testimonials dataset = 24 رأي", TST_P.length === 24);
+  check("testimonials أسماء مصرية فريدة", new Set(TST_P.map(t => t.name)).size === TST_P.length && TST_P.every(t => /^[\u0621-\u064A]+(\s[\u0621-\u064A]+)+$/.test(t.name)));
+  check("testimonials من الشرقية + محافظات أخرى", TST_P.some(t => t.gov === "الشرقية") && TST_P.some(t => t.gov !== "الشرقية"));
+  check("testimonials تغطي كل الأقسام الأربعة", new Set(TST_P.map(t => t.cat)).size === 4);
+  check("testimonials تقييمات 4-5 نجوم فقط", TST_P.every(t => t.stars >= 4 && t.stars <= 5));
+  check("testimonials نصوص واقعية (سرعة/أمانة/أداء)", TST_P.every(t => t.text.length > 70 && TST_WORDS.test(t.text)));
+  check("testimonials السلايدر مرسوم في القسم", d.querySelectorAll("#testiGrid .trv-card").length === 24);
+  const trvTrack = d.querySelector("#trvTrack");
+  const trvIdx = () => trvTrack ? parseInt(trvTrack.getAttribute("data-idx") || "0", 10) : -1;
+  check("testimonials السهم التالي يحرّك السلايدر", clickSel("#trvNext") && trvIdx() === 1);
+  check("testimonials السهم السابق يرجع السلايدر", clickSel("#trvPrev") && trvIdx() === 0);
+  check("testimonials فلتر دليفري يظهر آراء الدليفري فقط", clickSel("#trvTabs .trv-tab[data-cat='delivery']") && d.querySelectorAll("#trvTrack .trv-card").length === 6 && [...d.querySelectorAll("#trvTrack .trv-card")].every(c => c.getAttribute("data-cat") === "delivery"));
+  check("testimonials فلتر الكل يرجع كل الآراء", clickSel("#trvTabs .trv-tab[data-cat='all']") && d.querySelectorAll("#trvTrack .trv-card").length === 24);
+  check("testimonials إحصائية التقييم ظاهرة", !!d.querySelector(".trv-score__num") && d.querySelector(".trv-score__num").textContent.trim() !== "");
+
+  /* ===== سجل الحقني: 469 سجل (209 عمال + 260 زبائن) مع Pagination ===== */
+  const DIRECTORY = w.ELHANI_DIRECTORY || { people: [] };
+  const DIR_P = DIRECTORY.people;
+  const DIR_WORKERS = DIR_P.filter(p => p.type === "worker");
+  const DIR_WCAT = {};
+  DIR_WORKERS.forEach(p => { DIR_WCAT[p.category] = (DIR_WCAT[p.category] || 0) + 1; });
+  check("directory dataset = 469 records (209 عمال + 260 زبائن)", DIR_P.length === 469 && DIR_WORKERS.length === 209 && DIR_P.length - DIR_WORKERS.length === 260);
+  check("directory كل قسم عمال بين 1 و55", Object.keys(DIR_WCAT).length === 4 && Object.values(DIR_WCAT).every(n => n > 0 && n <= 55));
+  check("directory أسماء فريدة 100%", new Set(DIR_P.map(p => p.name)).size === DIR_P.length);
+  check("directory أرقام فريدة + صيغة مصرية", new Set(DIR_P.map(p => p.phone)).size === DIR_P.length && DIR_P.every(p => /^01[0125][0-9]{8}$/.test(p.phone)));
+  check("directory مقسم عمال + زبائن", DIR_P.filter(p => p.type === "worker").length > 0 && DIR_P.filter(p => p.type === "customer").length > 0);
+  check("directory كل المراكز جوه الشرقية", DIR_P.every(p => typeof p.city === "string" && p.city.length > 0));
+  check("directory section موجود في الموقع", !!d.querySelector("#records"));
+  const dirRows = () => [...d.querySelectorAll("#dirTbody tr")];
+  check("directory الجدول يعرض أول صفحة (12 سجل)", dirRows().length === 12);
+  const firstDirId = d.querySelector("#dirTbody .dir-id") ? d.querySelector("#dirTbody .dir-id").textContent : "";
+  d.querySelector("#dirNext").click();
+  await sleep(80);
+  const secondDirId = d.querySelector("#dirTbody .dir-id") ? d.querySelector("#dirTbody .dir-id").textContent : "";
+  check("Pagination: زر التالي يغير الصفحة بسلاسة", secondDirId !== "" && secondDirId !== firstDirId);
+  d.querySelector("#dirPrev").click();
+  await sleep(80);
+  check("Pagination: زر السابق يرجع للصفحة الأولى", (d.querySelector("#dirTbody .dir-id") || {}).textContent === firstDirId);
+  d.querySelector("#dirTabs .dir-tab[data-dir-type='worker']").click();
+  await sleep(80);
+  check("تبويب 'عمال' يفلتر الجدول", dirRows().length === 12 && dirRows().every(r => r.querySelector(".dir-type--worker")));
+  d.querySelector("#dirTabs .dir-tab[data-dir-type='customer']").click();
+  await sleep(80);
+  check("تبويب 'زبائن' يفلتر الجدول", dirRows().length === 12 && dirRows().every(r => r.querySelector(".dir-type--customer")));
+  d.querySelector("#dirTabs .dir-tab[data-dir-type='all']").click();
+  await sleep(80);
+  check("الرجوع لتبويب 'الكل'", d.querySelectorAll("#dirTbody tr").length === 12);
 
   /* ===== نظام الطلبات محذوف تمامًا ===== */
   check("NO booking modal", d.querySelector("#bookModal") === null);
@@ -76,7 +146,7 @@ const ADMIN = "01225990584";
   // provider live status (admin-controlled)
   check("p09 seeded busy by default", d.querySelectorAll('#provGrid .prov[data-status="busy"]').length === 1);
   check("p14 inactive by default", d.querySelectorAll('#provGrid .prov[data-status="inactive"]').length === 1);
-  check("active cards show 13 نشط", d.querySelectorAll("#provGrid .prov .status-dot.st--active").length === 13);
+  check("active cards show نشط (الكل نشط افتراضياً)", d.querySelectorAll("#provGrid .prov .status-dot.st--active").length === 13 + EXT.length);
 
   // Sharqia scope: every provider area mentions الشرقية
   const areas = [...d.querySelectorAll("#provGrid .prov")].map(c => c.dataset.name);
@@ -108,17 +178,18 @@ const ADMIN = "01225990584";
   svcCard.click();
   await sleep(50);
   let vis = [...d.querySelectorAll("#provGrid .prov")].filter(c => !c.classList.contains("hide"));
-  check("clicking قسم الأوناش → only cranes workers shown (3)", vis.length === 3 && vis.every(c => c.dataset.cat === "cranes"));
+  check("clicking قسم الأوناش → كل عمال الأوناش", vis.length === 3 + (EXT_BY_CAT.cranes || 0) && vis.every(c => c.dataset.cat === "cranes"));
   check("cranes chip became active", d.querySelector('#filterChips .chip[data-filter="cranes"]').classList.contains("active"));
   d.querySelector('#filterChips .chip[data-filter="all"]').click();
   await sleep(50);
-  check("back to all → 15 cards", d.querySelectorAll("#provGrid .prov:not(.hide)").length === 15);
+  check("back to all → كل الكروت", d.querySelectorAll("#provGrid .prov:not(.hide)").length === TOTAL);
 
   // footer category deep-link works the same way
+  const exDel = EXT_BY_CAT.delivery || 0;
   d.querySelector('.footer__links a[data-goto-cat="delivery"]').click();
   await sleep(50);
   vis = [...d.querySelectorAll("#provGrid .prov")].filter(c => !c.classList.contains("hide"));
-  check("footer قسم التوصيل → 4 delivery workers", vis.length === 4 && vis.every(c => c.dataset.cat === "delivery"));
+  check("footer قسم التوصيل → كل عمال الدليفري", vis.length === 4 + exDel && vis.every(c => c.dataset.cat === "delivery"));
   d.querySelector('#filterChips .chip[data-filter="all"]').click();
 
   // city filter select
@@ -126,17 +197,17 @@ const ADMIN = "01225990584";
   d.querySelector("#provCity").value = "بلبيس";
   fire(d.querySelector("#provCity"), "change");
   const bilbes = [...d.querySelectorAll("#provGrid .prov")].filter(c => !c.classList.contains("hide"));
-  check("city filter 'بلبيس' → 2 عامل (كهربا برو + المعتمد الجديد)", bilbes.length === 2);
+  check("city filter 'بلبيس' → كل عمال بلبيس", bilbes.length === 2 + (EXT_BY_CITY["بلبيس"] || 0));
   d.querySelector("#provCity").value = "";
   fire(d.querySelector("#provCity"), "change");
 
   // "المتاح الآن فقط" quick filter
   d.querySelector("#availChip").click();
   vis = [...d.querySelectorAll("#provGrid .prov")].filter(c => !c.classList.contains("hide"));
-  check('"المتاح الآن فقط" → 13 عامل', vis.length === 13);
+  check('"المتاح الآن فقط" → كل النشطين', vis.length === 13 + EXT.length);
   check("المتاح فقط بيعرض النشط", vis.every(c => c.dataset.status === "active"));
   d.querySelector("#availChip").click();
-  check("إلغاء الفلتر → ترجع 15 كارت", d.querySelectorAll("#provGrid .prov:not(.hide)").length === 15);
+  check("إلغاء الفلتر → ترجع كل الكروت", d.querySelectorAll("#provGrid .prov:not(.hide)").length === TOTAL);
 
   // Live reflection: admin change arriving from another tab (storage event)
   let ps = JSON.parse(w.localStorage.getItem("elhani_provider_status_v1") || "{}");
@@ -210,14 +281,17 @@ const ADMIN = "01225990584";
   ad.querySelector("#pass").value = "MohamedAkasha12";
   fire(ad.querySelector("#authForm"), "submit");
   await sleep(400);
+  const AEXT = aw.ELHANI_EXTRA_PROVIDERS || [];
+  const ABASE = 15;
+  const ATOTAL = ABASE + AEXT.length;
   check("master password → dashboard", ad.querySelector("#appView").hidden === false);
   check("session stored", !!JSON.parse(aw.localStorage.getItem("elhani_session_v1") || "{}").token);
-  check("workers KPI = 15", ad.querySelector("#stWorkers").textContent === "15");
-  check("active/busy/inactive = 13/1/1", ad.querySelector("#stActive").textContent === "13" && ad.querySelector("#stBusy").textContent === "1" && ad.querySelector("#stInactive").textContent === "1");
+  check("workers KPI = " + ATOTAL, ad.querySelector("#stWorkers").textContent === String(ATOTAL));
+  check("active/busy/inactive = " + (13 + AEXT.length) + "/1/1", ad.querySelector("#stActive").textContent === String(13 + AEXT.length) && ad.querySelector("#stBusy").textContent === "1" && ad.querySelector("#stInactive").textContent === "1");
   check("join KPI = 1 pending", ad.querySelector("#stJoins").textContent === "1");
   check("join sidebar badge = 1", ad.querySelector("#joinBadge").textContent === "1");
   check("5 KPI cards", ad.querySelectorAll(".acard").length === 5);
-  check("quick status control on overview", ad.querySelectorAll("#quickBody tr").length === 15);
+  check("quick status control on overview", ad.querySelectorAll("#quickBody tr").length === ATOTAL);
 
   // joins view
   ad.querySelector('[data-view="joins"]').click();
@@ -230,7 +304,7 @@ const ADMIN = "01225990584";
   let j2 = JSON.parse(aw.localStorage.getItem("elhani_join_requests_v1")).find(j => j.id === "JN-502");
   check("approve → status approved", j2.status === "approved");
   check("KPI updated to 0", ad.querySelector("#stJoins").textContent === "0");
-  check("workers KPI grew to 16", ad.querySelector("#stWorkers").textContent === "16");
+  check("workers KPI grew to " + (ATOTAL + 1), ad.querySelector("#stWorkers").textContent === String(ATOTAL + 1));
 
   // tab filter: approved = 2
   ad.querySelector('#joinTabs .tab[data-jtab="approved"]').click();
@@ -246,9 +320,55 @@ const ADMIN = "01225990584";
 
   // workers + live status control
   ad.querySelector('[data-view="providers"]').click();
-  check("workers table = 15 rows (14 core + 1 approved join)", ad.querySelectorAll("#provBody tr").length === 15);
-  check("3 status buttons on every row", ad.querySelectorAll("#provBody .sbtn").length === 45);
-  check("every worker row shows tel + wa links", ad.querySelectorAll("#provBody a[href^='tel:+20']").length === 15 && ad.querySelectorAll("#provBody a[href^='https://wa.me/20']").length === 15);
+  check("workers table = " + ATOTAL + " rows (مع الدليل الموسّع)", ad.querySelectorAll("#provBody tr").length === ATOTAL);
+  check("3 status buttons on every row", ad.querySelectorAll("#provBody .sbtn").length === ATOTAL * 3);
+  check("pay toggle button on every row", ad.querySelectorAll("#provBody .pay-btn").length === ATOTAL);
+
+  /* ===== نظام إدارة العمال: إضافة يدوية + اشتراكات (مدفوع / لم يُدفع) ===== */
+  ad.querySelector("#addWorkerBtn").click();
+  check("manual-add modal opens", ad.querySelector("#workerModal").classList.contains("open"));
+  ad.querySelector("#wName").value = "أوناش السنبلاوين الحديثة";
+  ad.querySelector("#wPhone").value = "01012345678";
+  ad.querySelector("#wCat").value = "cranes";
+  ad.querySelector("#wCity").value = "الزقازيق";
+  ad.querySelector("#wJobs").value = "أونش 25 طن • نقل عمارات";
+  ad.querySelector("#wWa").value = "01012345678";
+  ad.querySelector("#wPaid").value = "paid";
+  fire(ad.querySelector("#addWorkerForm"), "submit");
+  await sleep(200);
+  const custom = JSON.parse(aw.localStorage.getItem("elhani_custom_providers_v1") || "[]");
+  check("manual provider saved with paid status", custom.length === 1 && custom[0].id === "MP-1001" && custom[0].paid === "paid");
+  check("workers table grew to " + (ATOTAL + 1), ad.querySelectorAll("#provBody tr").length === ATOTAL + 1);
+  check("manual row shows مدفوع pill", !![...ad.querySelectorAll("#provBody tr")].find(tr => tr.textContent.includes("أوناش السنبلاوين"))?.querySelector(".pill--done"));
+  const manualPayBtn = [...ad.querySelectorAll("#provBody .pay-btn")].find(b => b.getAttribute("data-pay") === "MP-1001");
+  manualPayBtn.click();
+  await sleep(150);
+  check("pay toggle → لم يُدفع saved", JSON.parse(aw.localStorage.getItem("elhani_provider_paid_v1") || "{}")["MP-1001"] === "unpaid");
+
+  /* ===== اعتماد طلب انضمام بالبيانات الكاملة + الاشتراك ===== */
+  ad.querySelector('[data-view="joins"]').click();
+  ad.querySelector('#joinTabs .tab[data-jtab="all"]').click();
+  ad.querySelector('[data-approve-full="JN-501"]').click();
+  check("approve-details modal opens prefilled", ad.querySelector("#approveModal").classList.contains("open") && ad.querySelector("#aName").value === "توصيل بلبيس السريعة");
+  ad.querySelector("#aName").value = "توصيل بلبيس السريعة (محدث)";
+  ad.querySelector("#aPaid").value = "paid";
+  fire(ad.querySelector("#approveForm"), "submit");
+  await sleep(200);
+  const j501 = JSON.parse(aw.localStorage.getItem("elhani_join_requests_v1")).find(j => j.id === "JN-501");
+  check("approve-full → approved + paid + updated name", j501.status === "approved" && j501.paid === "paid" && j501.name === "توصيل بلبيس السريعة (محدث)");
+  // undo to keep the rest of the suite predictable: reset name back
+  const joinsNow = JSON.parse(aw.localStorage.getItem("elhani_join_requests_v1"));
+  joinsNow.find(j => j.id === "JN-501").name = "توصيل بلبيس السريعة";
+  aw.localStorage.setItem("elhani_join_requests_v1", JSON.stringify(joinsNow));
+  ad.querySelector('[data-view="providers"]').click();
+  check("workers table after manual add = " + (ATOTAL + 1), ad.querySelectorAll("#provBody tr").length === ATOTAL + 1);
+  // cleanup manual provider for remaining assertions (reset status asserts only status map)
+  const customList = JSON.parse(aw.localStorage.getItem("elhani_custom_providers_v1") || "[]");
+  customList.length = 0;
+  aw.localStorage.setItem("elhani_custom_providers_v1", JSON.stringify(customList));
+  ad.querySelector('[data-view="overview"]').click();
+  ad.querySelector('[data-view="providers"]').click();
+  check("every worker row shows tel + wa links", ad.querySelectorAll("#provBody a[href^='tel:+20']").length === ATOTAL && ad.querySelectorAll("#provBody a[href^='https://wa.me/20']").length === ATOTAL);
   check("no price column in workers table", ad.querySelector("#view-providers").textContent.indexOf("ج.م") === -1 && ad.querySelector("#view-providers").textContent.indexOf("السعر") === -1);
   check("p01 default = active highlighted", ad.querySelector('#provBody .sbtn[data-pid="p01"][data-st="active"]').classList.contains("on"));
   check("p09 seeded busy highlighted", ad.querySelector('#provBody .sbtn[data-pid="p09"][data-st="busy"]').classList.contains("on"));

@@ -11,6 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/admin.css">
   <script src="js/data.js" defer></script>
+  <script src="js/data-500.js" defer></script>
   <script src="js/auth.js" defer></script>
   <script src="js/admin.js" defer></script>
 </head>
@@ -138,7 +139,7 @@
             <div class="panel__head"><h3>⚡ التحكم السريع في حالات العمال</h3><span class="panel__hint">أي تغيير ينعكس فوراً على كروت الموقع</span></div>
             <div class="table-wrap">
               <table class="table">
-                <thead><tr><th>العامل</th><th>التخصص</th><th>الحالة</th><th>التحكم</th></tr></thead>
+                <thead><tr><th>العامل</th><th>التخصص</th><th>الحالة</th><th>الاشتراك</th><th>التحكم</th></tr></thead>
                 <tbody id="quickBody"></tbody>
               </table>
             </div>
@@ -169,11 +170,14 @@
           <div class="panel gold-frame">
             <div class="panel__head">
               <h3>👷 إدارة العمال ومقدمي الخدمات</h3>
-              <span class="panel__hint">نشط 🟢 / مشغول 🔴 / غير نشط ⚫ — ينعكس فوراً على الموقع</span>
+              <div class="panel__head-actions">
+                <span class="panel__hint">نشط 🟢 / مشغول 🔴 / غير نشط ⚫ — ينعكس فوراً على الموقع</span>
+                <button class="btn btn--gold btn--sm" id="addWorkerBtn">➕ إضافة عامل جديد</button>
+              </div>
             </div>
             <div class="table-wrap">
               <table class="table">
-                <thead><tr><th>العامل</th><th>التخصص</th><th>المنطقة</th><th>اتصال</th><th>واتساب</th><th>الحالة</th><th>التحكم السريع</th></tr></thead>
+                <thead><tr><th>العامل</th><th>التخصص</th><th>المنطقة</th><th>اتصال</th><th>واتساب</th><th>الاشتراك</th><th>الحالة</th><th>التحكم السريع</th></tr></thead>
                 <tbody id="provBody"></tbody>
               </table>
             </div>
@@ -212,6 +216,128 @@
         </section>
       </div>
     </main>
+  </div>
+
+  <!-- ================= MODAL: إضافة عامل يدوياً ================= -->
+  <div class="amodal" id="workerModal" role="dialog" aria-modal="true" aria-labelledby="workerTitle">
+    <div class="amodal__overlay" data-close></div>
+    <div class="amodal__panel">
+      <div class="amodal__head">
+        <h3 class="amodal__title" id="workerTitle">➕ إضافة عامل <span class="grad">جديد يدوياً</span></h3>
+        <button class="amodal__close" data-close aria-label="إغلاق">✕</button>
+      </div>
+      <p class="amodal__sub">أدخل بيانات العامل بالكامل — هيظهر على الدليل فور الحفظ بزرار اتصال وواتساب، وحالة الاشتراك إدارية خاصة بلوحة التحكم.</p>
+      <form id="addWorkerForm" novalidate>
+        <div class="aform-grid">
+          <div class="afield">
+            <label for="wName">اسم العامل / النشاط <b>*</b></label>
+            <input type="text" id="wName" placeholder="مثال: أوناش السنبلاوين الحديثة" required>
+            <span class="aerr">اكتب الاسم (3 أحرف على الأقل)</span>
+          </div>
+          <div class="afield">
+            <label for="wPhone">رقم الموبايل <b>*</b></label>
+            <input type="tel" id="wPhone" inputmode="numeric" placeholder="01xxxxxxxxx" dir="ltr" style="text-align:right" required>
+            <span class="aerr">رقم مصري صحيح: 01xxxxxxxxx</span>
+          </div>
+          <div class="afield">
+            <label for="wCat">القسم <b>*</b></label>
+            <select id="wCat" required></select>
+            <span class="aerr">اختار القسم</span>
+          </div>
+          <div class="afield">
+            <label for="wCity">المركز / المدينة <b>*</b></label>
+            <select id="wCity" required></select>
+            <span class="aerr">اختار مركز من الشرقية</span>
+          </div>
+          <div class="afield afield--full">
+            <label for="wJobs">التخصص / الخدمات <b>*</b></label>
+            <input type="text" id="wJobs" placeholder="مثال: أونش 25 طن • نقل عمارات • مصانع" required>
+            <span class="aerr">اكتب التخصص (3 أحرف على الأقل)</span>
+          </div>
+          <div class="afield">
+            <label for="wWa">رقم الواتساب (اختياري)</label>
+            <input type="tel" id="wWa" inputmode="numeric" placeholder="01xxxxxxxxx" dir="ltr" style="text-align:right">
+            <span class="aerr">رقم غير صحيح</span>
+          </div>
+          <div class="afield">
+            <label for="wPaid">حالة الاشتراك / الرسوم <b>*</b></label>
+            <select id="wPaid">
+              <option value="unpaid">⏳ لم يُدفع بعد</option>
+              <option value="paid">✅ مدفوع</option>
+            </select>
+          </div>
+          <div class="afield afield--full">
+            <label for="wNotes">ملاحظات إدارية (اختياري)</label>
+            <textarea id="wNotes" placeholder="أي ملاحظات عن العامل…"></textarea>
+          </div>
+        </div>
+        <div class="aform-actions">
+          <button type="submit" class="btn btn--gold">💾 حفظ وإضافة للدليل</button>
+          <button type="button" class="btn btn--ghost" data-close>إلغاء</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: اعتماد طلب انضمام بالتفاصيل ================= -->
+  <div class="amodal" id="approveModal" role="dialog" aria-modal="true" aria-labelledby="approveTitle">
+    <div class="amodal__overlay" data-close></div>
+    <div class="amodal__panel">
+      <div class="amodal__head">
+        <h3 class="amodal__title" id="approveTitle">🗂 اعتماد الطلب <span class="grad">بالبيانات الكاملة</span></h3>
+        <button class="amodal__close" data-close aria-label="إغلاق">✕</button>
+      </div>
+      <p class="amodal__sub">راجع بيانات صاحب الطلب وحدد حالة الاشتراك — بعد الحفظ هيظهر كارت العامل على الدليل فوراً.</p>
+      <form id="approveForm" novalidate>
+        <div class="aform-grid">
+          <div class="afield">
+            <label for="aName">اسم النشاط <b>*</b></label>
+            <input type="text" id="aName" required>
+            <span class="aerr">اكتب الاسم (3 أحرف على الأقل)</span>
+          </div>
+          <div class="afield">
+            <label for="aPhone">رقم الموبايل <b>*</b></label>
+            <input type="tel" id="aPhone" inputmode="numeric" dir="ltr" style="text-align:right" required>
+            <span class="aerr">رقم مصري صحيح: 01xxxxxxxxx</span>
+          </div>
+          <div class="afield">
+            <label for="aCat">القسم <b>*</b></label>
+            <select id="aCat" required></select>
+            <span class="aerr">اختار القسم</span>
+          </div>
+          <div class="afield">
+            <label for="aCity">المركز / المدينة <b>*</b></label>
+            <select id="aCity" required></select>
+            <span class="aerr">اختار مركز من الشرقية</span>
+          </div>
+          <div class="afield afield--full">
+            <label for="aJobs">التخصص / الخدمات <b>*</b></label>
+            <input type="text" id="aJobs" required>
+            <span class="aerr">اكتب التخصص (3 أحرف على الأقل)</span>
+          </div>
+          <div class="afield">
+            <label for="aWa">رقم الواتساب (اختياري)</label>
+            <input type="tel" id="aWa" inputmode="numeric" dir="ltr" style="text-align:right">
+            <span class="aerr">رقم غير صحيح</span>
+          </div>
+          <div class="afield">
+            <label for="aPaid">حالة الاشتراك / الرسوم <b>*</b></label>
+            <select id="aPaid">
+              <option value="unpaid">⏳ لم يُدفع بعد</option>
+              <option value="paid">✅ مدفوع</option>
+            </select>
+          </div>
+          <div class="afield afield--full">
+            <label for="aNotes">ملاحظات إدارية (اختياري)</label>
+            <textarea id="aNotes" placeholder="مراجعة الإدارة…"></textarea>
+          </div>
+        </div>
+        <div class="aform-actions">
+          <button type="submit" class="btn btn--gold">✅ اعتماد وإظهار على الدليل</button>
+          <button type="button" class="btn btn--ghost" data-close>إلغاء</button>
+        </div>
+      </form>
+    </div>
   </div>
 
   <div class="toast-wrap" id="toasts" aria-live="polite"></div>

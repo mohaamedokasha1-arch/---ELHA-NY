@@ -12,6 +12,7 @@
 
   var LS_JOINS = "elhani_join_requests_v1";
   var LS_JOIN_SEQ = "elhani_join_seq";
+  var LS_CUSTOM = "elhani_custom_providers_v1";
 
   /* ===== حالات العمال الحية (يتحكم فيها الأدمن فقط) =====
      active: نشط 🟢 | busy: مشغول 🔴 | inactive: غير نشط ⚫ */
@@ -283,6 +284,25 @@
     });
   }
 
+  /* العمال المضافون يدوياً من لوحة التحكم — يظهرون على الدليل فور الحفظ */
+  function customProviders() {
+    try {
+      return JSON.parse(localStorage.getItem(LS_CUSTOM) || "[]").map(function (c) {
+        var cc = catById(c.cat);
+        return {
+          id: c.id, name: c.name, emoji: c.emoji || (cc ? cc.icon : "🛠️"), cat: c.cat,
+          sub: c.sub || (c.jobs ? c.jobs.split("•")[0].trim() : "مقدم خدمة"),
+          area: c.area || "الشرقية",
+          badge: "manual",
+          jobs: c.jobs || "",
+          phone: c.phone || "",
+          wa: c.wa || c.phone || "",
+          active: true, isNew: true
+        };
+      });
+    } catch (e) { return []; }
+  }
+
   /* Seed بيانات الانضمام التجريبية (مرة واحدة، بنفس علامة الأدمن) */
   function seedJoins() {
     if (localStorage.getItem("elhani_join_seeded_v1")) return;
@@ -303,12 +323,13 @@
   function renderProviders() {
     var grid = $("#provGrid");
     if (!grid) return;
-    var all = D.providers.concat(approvedProviders());
+    var extras = (window.ELHANI_EXTRA_PROVIDERS || []).map(function (x) { x.isNew = false; return x; });
+    var all = D.providers.concat(approvedProviders()).concat(customProviders()).concat(extras);
     var ST_LABEL = { active: "نشط — متاح الآن", busy: "مشغول حالياً", inactive: "غير نشط" };
     grid.innerHTML = all.map(function (p) {
       var st = statusOf(p);
       var stHtml = '<span class="status-dot st--' + st + '" title="الحالة تحدّثها الإدارة أوتوماتيكياً"><i></i> ' + (ST_LABEL[st] || ST_LABEL.active) + "</span>";
-      var newBadge = p.isNew ? '<span class="badge badge--new">✨ جديد — اعتمدته الإدارة</span>' : "";
+      var newBadge = p.isNew ? '<span class="badge badge--new">' + (p.badge === "manual" ? "🛡️ أضافته الإدارة — موثّق" : "✨ جديد — اعتمدته الإدارة") + "</span>" : "";
       var contact =
         '<a class="btn btn--call btn--sm" href="' + telHref(p.phone) + '" data-call="' + p.id + '" aria-label="اتصال هاتفي مباشر بـ ' + p.name + '">📞 اتصال فوري</a>' +
         '<a class="btn btn--wa btn--sm" href="' + waHref(p.wa || p.phone) + '" target="_blank" rel="noopener" data-wa="' + p.id + '" aria-label="دردشة واتساب مع ' + p.name + '">✆ واتساب</a>';
@@ -394,9 +415,9 @@
       e.preventDefault();
       gotoCategory(el.getAttribute("data-goto-cat"));
     });
-    /* انعكاس لحظي: تغيير حالة العامل من تبويب الأدمن بيُحدّث الكروت هنا فوراً */
+    /* انعكاس لحظي: تغيير حالة العامل أو إضافته من تبويب الأدمن بيُحدّث الكروت هنا فوراً */
     window.addEventListener("storage", function (e) {
-      if (e.key === LS_PSTATUS || e.key === LS_JOINS) renderProviders();
+      if (e.key === LS_PSTATUS || e.key === LS_JOINS || e.key === LS_CUSTOM) renderProviders();
     });
   }
 
