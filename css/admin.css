@@ -344,6 +344,26 @@ input,select,textarea{font-family:inherit;color:var(--text)}
 .contact-link:hover{color:var(--text);text-decoration:underline}
 
 /* ============================================================
+   ✨ طبقة اللمسات الجمالية — Polish Layer
+   (بنفس روح لمسات الموقع الرئيسي — بدون تعديل أي قاعدة قائمة)
+   ============================================================ */
+body{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility;-webkit-tap-highlight-color:transparent}
+:root{
+  --muted:#a6b1c6;             /* كانت #9aa5bb */
+  --muted-2:#7f8aa4;           /* كانت #6b7690 */
+  --line:rgba(212,175,55,.24); /* كانت .18 */
+  --line-soft:rgba(255,255,255,.09);
+}
+::selection{background:rgba(212,175,55,.5);color:#fff}
+:focus-visible{outline:2px solid rgba(0,229,255,.8);outline-offset:3px}
+.btn:focus-visible,.side__item:focus-visible,.tab:focus-visible,.sbtn:focus-visible{outline:2px solid var(--cyan);outline-offset:3px}
+::-webkit-scrollbar-thumb{border:3px solid var(--bg-0);border-radius:99px;background:linear-gradient(var(--gold-3),#7c611c) padding-box}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001s !important;transition-duration:.001s !important}
+  html{scroll-behavior:auto}
+}
+
+/* ============================================================
    خاصية إضافة عامل جديد + الحالة المالية (مدفوع / لم يُدفع)
    نفس ثيم اللوحة — كلها قواعد جديدة من غير لمس أي ستايل قائم
    ============================================================ */
