@@ -107,6 +107,14 @@ const ADMIN = "01225990584";
   d.querySelector("#availChip").click();
   check("إلغاء الفلتر → فاضية برضه", d.querySelectorAll("#provGrid .prov:not(.hide)").length === 0);
 
+  /* ===== إخلاء المسئولية الرسمي عن الأرقام والبيانات ===== */
+  const disc = d.querySelector("#disclaimer");
+  check("قسم إخلاء المسئولية موجود وبارز (gold-frame)", !!disc && !!disc.querySelector(".disclaimer__panel.gold-frame"));
+  const discText = disc ? disc.textContent : "";
+  check("التنبيه يوضح: بيانات السيستم هي المعتمدة رسميًا", discText.includes("المعتمدة رسميًا") && discText.includes("الإدارة"));
+  check("التنبيه يوضح: الإدارة غير مسئولة عن البيانات المستبعدة بره السيستم", discText.includes("غير مسئولة") && discText.includes("بره السيستم") && discText.includes("بتُستبعد"));
+  check("المكان المناسب: بعد بانر CTA مباشرة وقبل الفوتر", disc.previousElementSibling.classList.contains("cta-band") && disc.parentElement.nextElementSibling.tagName === "FOOTER");
+
   // admin number everywhere (طوارئ فقط)
   check("nav emergency button → tel admin number", (d.querySelector('.nav__actions a[href^="tel:"]').href || "").includes(ADMIN));
   check("footer wa → admin number", (d.querySelector('.footer__social a[href^="https://wa.me"]').href || "").includes(ADMIN));

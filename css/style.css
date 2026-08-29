@@ -758,3 +758,58 @@ ul{list-style:none}
 }
 .btn--wa:hover{transform:translateY(-3px);box-shadow:0 18px 55px -12px rgba(46,230,168,.6)}
 .prov--inactive .prov__contact .btn{pointer-events:none}
+
+/* ============================================================
+   إخلاء المسئولية الرسمي عن الأرقام والبيانات
+   (قواعد جديدة فقط بنفس ثيم Midnight Gold — بدون لمس أي ستايل قائم)
+   ============================================================ */
+.disclaimer{padding:0 0 30px}
+.disclaimer__panel{
+  position:relative;overflow:hidden;
+  display:grid;grid-template-columns:auto 1fr;gap:28px;align-items:start;
+  padding:36px 40px;border-radius:var(--radius);
+}
+/* شريط تحذيري بارز على حافة البلوك */
+.disclaimer__panel::before{
+  content:"";position:absolute;inset-inline-start:0;top:0;bottom:0;width:4px;
+  background:linear-gradient(180deg,var(--amber),var(--orange));
+  box-shadow:0 0 24px rgba(255,176,32,.45);
+}
+.disclaimer__icon{
+  width:66px;height:66px;border-radius:18px;display:grid;place-items:center;flex:none;
+  font-size:1.9rem;background:rgba(255,176,32,.1);border:1px solid rgba(255,176,32,.4);
+  box-shadow:0 0 44px -12px rgba(255,176,32,.45);
+}
+.disclaimer__badge{
+  display:inline-flex;align-items:center;gap:8px;
+  font-family:var(--font-display);font-weight:800;font-size:.8rem;color:var(--amber);
+  background:rgba(255,176,32,.1);border:1px solid rgba(255,176,32,.35);
+  padding:6px 16px;border-radius:999px;margin-bottom:14px;
+}
+.disclaimer__title{
+  font-family:var(--font-display);font-weight:900;
+  font-size:clamp(1.25rem,2.6vw,1.7rem);line-height:1.55;margin-bottom:18px;
+}
+.disclaimer__list{display:flex;flex-direction:column;gap:14px}
+.disclaimer__item{
+  display:flex;gap:14px;align-items:flex-start;
+  padding:16px 18px;border-radius:16px;background:var(--bg-1);border:1px solid var(--line-soft);
+}
+.disclaimer__item .ic{
+  width:34px;height:34px;border-radius:10px;display:grid;place-items:center;flex:none;font-size:1rem;
+}
+.disclaimer__item p{color:var(--muted);font-size:.97rem;line-height:1.95}
+.disclaimer__item p b{color:var(--text)}
+.disclaimer__item--ok{border-color:rgba(46,230,168,.22)}
+.disclaimer__item--ok .ic{background:rgba(46,230,168,.1);border:1px solid rgba(46,230,168,.35)}
+.disclaimer__item--warn{border-color:rgba(255,84,112,.25)}
+.disclaimer__item--warn .ic{background:rgba(255,84,112,.1);border:1px solid rgba(255,84,112,.35)}
+.disclaimer__foot{
+  margin-top:16px;color:var(--gold-1);font-size:.9rem;font-weight:700;
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+}
+@media (max-width:768px){
+  .disclaimer{padding:0 0 10px}
+  .disclaimer__panel{grid-template-columns:1fr;padding:26px 22px;gap:18px}
+  .disclaimer__icon{width:56px;height:56px;font-size:1.6rem}
+}
