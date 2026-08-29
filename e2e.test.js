@@ -266,6 +266,46 @@ const ADMIN = "01225990584";
   const resetMap = JSON.parse(aw.localStorage.getItem("elhani_provider_status_v1"));
   check("reset → all active", Object.values(resetMap).every(v => v === "active"));
 
+  /* ===== خاصية إضافة عامل جديد + الحالة المالية ===== */
+  ad.querySelector('[data-view="providers"]').click();
+  check("زر «إضافة عامل جديد» موجود في لوحة العمال", !!ad.querySelector("#addWorkerBtn"));
+  check("عمود «الحالة المالية» في جدول العمال", ad.querySelector("#view-providers .table thead").textContent.includes("الحالة المالية"));
+
+  ad.querySelector("#addWorkerBtn").click();
+  check("نافذة الإضافة بتفتح", ad.querySelector("#workerModal").classList.contains("modal--open"));
+  check("قائمة الأقسام متولدة (4 أقسام + اختيار)", ad.querySelectorAll("#wCat option").length === 5);
+  check("قائمة المراكز متولدة (15 مركز + اختيار)", ad.querySelectorAll("#wCity option").length === 16);
+  check("الحالة المالية: مدفوع / لم يُدفع", ad.querySelectorAll("#wPaid option").length === 2 && ad.querySelector("#wPaid option[value='paid']") !== null);
+
+  // empty submit → validation blocks
+  fire(ad.querySelector("#workerForm"), "submit");
+  check("فورم فاضي → validation شغال والنافذة مليانه أخطاء", ad.querySelectorAll("#workerForm .field.invalid").length === 5 && ad.querySelector("#workerModal").classList.contains("modal--open"));
+
+  // fill and submit a real worker
+  ad.querySelector("#wName").value = "دليفري الزقازيق السريع";
+  ad.querySelector("#wPhone").value = "01055556666";
+  ad.querySelector("#wCat").value = "delivery";
+  ad.querySelector("#wCity").value = "الزقازيق";
+  ad.querySelector("#wJobs").value = "توصيل فوري • مشاوير";
+  ad.querySelector("#wPaid").value = "paid";
+  fire(ad.querySelector("#workerForm"), "submit");
+  check("بعد الإضافة النافذة بتتقفل", !ad.querySelector("#workerModal").classList.contains("modal--open"));
+  check("توست تأكيد ظهر", !!ad.querySelector(".toast--ok"));
+
+  const rec = JSON.parse(aw.localStorage.getItem("elhani_join_requests_v1")).find(j => j.name === "دليفري الزقازيق السريع");
+  check("السجل اتسجل: معتمد + مدفوع + قسم دليفري + الزقازيق", !!rec && rec.status === "approved" && rec.paid === true && rec.cat === "delivery" && rec.city === "الزقازيق" && rec.phone === "01055556666" && rec.src === "admin");
+  check("العامل ظهر في جدول العمال فورًا", ad.querySelectorAll("#provBody tr").length === 1);
+  check("KPI إجمالي العمال = 1", ad.querySelector("#stWorkers").textContent === "1");
+  check("الحالة المالية ظاهرة قدام العامل (مدفوع)", ad.querySelectorAll("#provBody .pay-toggle.pill--paid").length === 1);
+  check("العامل الجديد بيهاتف على رقمه (اتصال + واتساب)", ad.querySelectorAll("#provBody a[href^='tel:+201055556666']").length === 1 && ad.querySelectorAll("#provBody a[href^='https://wa.me/201055556666']").length === 1);
+
+  // toggle payment status in-place
+  fire(ad.querySelector("#provBody .pay-toggle"), "click");
+  check("ضغطة واحدة → بقت «لم يُدفع» في التخزين", JSON.parse(aw.localStorage.getItem("elhani_join_requests_v1")).find(j => j.name === "دليفري الزقازيق السريع").paid === false);
+  check("العمود اتحدث لـ «لم يُدفع»", ad.querySelectorAll("#provBody .pay-toggle.pill--unpaid").length === 1);
+  fire(ad.querySelector("#provBody .pay-toggle"), "click");
+  check("رجعناها «مدفوع» تاني", JSON.parse(aw.localStorage.getItem("elhani_join_requests_v1")).find(j => j.name === "دليفري الزقازيق السريع").paid === true);
+
   ad.querySelector("#logoutBtn").click();
   await sleep(500);
   check("logout clears session", aw.localStorage.getItem("elhani_session_v1") === null);
