@@ -87,13 +87,6 @@
   }
   function defaultStatusFor(p) { return p.isJoin ? "active" : (p.active ? "active" : "inactive"); }
   function statusOf(p) { return loadPStatus()[p.id] || defaultStatusFor(p); }
-  function seedPStatus() {
-    if (localStorage.getItem("elhani_pstatus_seeded_v1")) return;
-    var s = loadPStatus();
-    if (!s.p09) s.p09 = "busy";
-    savePStatus(s);
-    localStorage.setItem("elhani_pstatus_seeded_v1", "1");
-  }
   /* كل عمال الدليل: الأساسيون + المعتمدون من طلبات الانضمام */
   function allPlatformProviders() {
     var joins = loadJoins().filter(function (j) { return j.status === "approved"; }).map(function (j) {
@@ -109,17 +102,14 @@
     return D.providers.concat(joins);
   }
 
-  /* ---------------- Seed demo join requests (first run only) ---------------- */
-  function seed() {
-    if (localStorage.getItem("elhani_join_seeded_v1")) return;
-    var now = Date.now(), H = 3600 * 1000;
-    var joins = [
-      { id: "JN-501", ts: now - 26 * H, name: "توصيل بلبيس السريعة", phone: "01199988877", cat: "delivery", catName: catName("delivery"), jobs: "توصيل فوري • مشاوير • مستندات", city: "بلبيس", wa: "01199988877", notes: "فريق من 4 سكرتير، جاهزين نبدأ فور الاعتماد.", status: "approved" },
-      { id: "JN-502", ts: now - 6 * H, name: "سباك حسن أبو علي", phone: "01088877766", cat: "maintenance", catName: catName("maintenance"), jobs: "سباكة عامة • سخانات • محارة مياه", city: "أبو حماد", wa: "", notes: "خبرة 12 سنة، أخدم كل مراكز الشرقية.", status: "pending" }
-    ];
-    saveJoins(joins);
-    localStorage.setItem("elhani_join_seeded_v1", "1");
-    if (!localStorage.getItem(LS_JOIN_SEQ)) localStorage.setItem(LS_JOIN_SEQ, "502");
+  /* ---------------- إزالة بيانات الانضمام الوهمية القديمة (مرة واحدة) ----------------
+     النسخ القديمة كانت بتزرع طلبات وهمية (JN-501 / JN-502) — الشيل دي بتمسحها
+     من متصفح أي زائر قديم، ومفيش أي بيانات وهمية بتتزرع بعد كده. */
+  function purgeFakeJoins() {
+    if (localStorage.getItem("elhani_fake_joins_purged_v1")) return;
+    var FAKES = ["JN-501", "JN-502"];
+    saveJoins(loadJoins().filter(function (j) { return FAKES.indexOf(j.id) === -1; }));
+    localStorage.setItem("elhani_fake_joins_purged_v1", "1");
   }
 
   /* ---------------- AUTH GATE ---------------- */
@@ -424,9 +414,8 @@
 
   /* ---------------- Boot ---------------- */
   document.addEventListener("DOMContentLoaded", function () {
-    seed();
+    purgeFakeJoins();
     migrateOldProviderState();
-    seedPStatus();
     initAuth();
     initSettings();
     $$("#sideNav .side__item").forEach(function (b) {

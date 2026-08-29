@@ -34,13 +34,6 @@
   }
   function defaultStatusFor(p) { return p.isNew ? "active" : (p.active ? "active" : "inactive"); }
   function statusOf(p) { return loadPStatus()[p.id] || defaultStatusFor(p); }
-  function seedPStatus() {
-    if (localStorage.getItem("elhani_pstatus_seeded_v1")) return;
-    var s = loadPStatus();
-    if (!s.p09) s.p09 = "busy"; /* حالة تجريبية للعرض */
-    savePStatus(s);
-    localStorage.setItem("elhani_pstatus_seeded_v1", "1");
-  }
 
   /* أرقام مصرية → صيغ الاتصال المباشر */
   function telHref(phone) { return "tel:+20" + String(phone || "").replace(/^0/, ""); }
@@ -92,7 +85,7 @@
     var links = $$(".nav__link");
     var pos = window.scrollY + 140;
     var current = null;
-    ["hero", "services", "how", "providers", "reviews", "join"].forEach(function (id) {
+    ["hero", "services", "how", "providers", "join"].forEach(function (id) {
       var el = document.getElementById(id);
       if (el && el.offsetTop <= pos) current = id;
     });
@@ -283,18 +276,13 @@
     });
   }
 
-  /* Seed بيانات الانضمام التجريبية (مرة واحدة، بنفس علامة الأدمن) */
-  function seedJoins() {
-    if (localStorage.getItem("elhani_join_seeded_v1")) return;
-    var now = Date.now(), H = 3600 * 1000;
-    var cn = function (id) { var c = D.categories.filter(function (x) { return x.id === id; })[0]; return c ? c.name : id; };
-    var joins = [
-      { id: "JN-501", ts: now - 26 * H, name: "توصيل بلبيس السريعة", phone: "01199988877", cat: "delivery", catName: cn("delivery"), jobs: "توصيل فوري • مشاوير • مستندات", city: "بلبيس", wa: "01199988877", notes: "فريق من 4 سكرتير، جاهزين نبدأ فور الاعتماد.", status: "approved" },
-      { id: "JN-502", ts: now - 6 * H, name: "سباك حسن أبو علي", phone: "01088877766", cat: "maintenance", catName: cn("maintenance"), jobs: "سباكة عامة • سخانات • محارة مياه", city: "أبو حماد", wa: "", notes: "خبرة 12 سنة، أخدم كل مراكز الشرقية.", status: "pending" }
-    ];
-    saveJoins(joins);
-    localStorage.setItem("elhani_join_seeded_v1", "1");
-    if (!localStorage.getItem(LS_JOIN_SEQ)) localStorage.setItem(LS_JOIN_SEQ, "502");
+  /* إزالة بيانات الانضمام الوهمية القديمة (JN-501 / JN-502) من متصفحات الزوار القدامى — مرة واحدة.
+     مفيش أي بيانات وهمية بتتزرع بعد كده؛ الدليل بيتملى بالطلبات الحقيقية بس. */
+  function purgeFakeJoins() {
+    if (localStorage.getItem("elhani_fake_joins_purged_v1")) return;
+    var FAKES = ["JN-501", "JN-502"];
+    saveJoins(loadJoins().filter(function (j) { return FAKES.indexOf(j.id) === -1; }));
+    localStorage.setItem("elhani_fake_joins_purged_v1", "1");
   }
 
   /* ---------------- Render: قائمة العمال ---------------- */
@@ -556,9 +544,8 @@
 
   /* ---------------- Init ---------------- */
   document.addEventListener("DOMContentLoaded", function () {
-    seedJoins();
+    purgeFakeJoins();
     migrateOldProviderState();
-    seedPStatus();
     renderServices();
     renderProviders();
     renderTestimonials();
