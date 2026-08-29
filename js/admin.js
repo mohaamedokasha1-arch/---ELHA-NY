@@ -14,11 +14,19 @@
   var LS_PROVIDERS = "elhani_admin_providers_v1";
   var LS_JOINS = "elhani_join_requests_v1";
   var LS_JOIN_SEQ = "elhani_join_seq";
+  var LS_CUSTOM = "elhani_custom_providers_v1";
+  var LS_CUSTOM_SEQ = "elhani_custom_providers_seq";
+  var LS_PAID = "elhani_provider_paid_v1";
 
   var JOIN_STATUSES = {
     pending: { label: "قيد المراجعة", cls: "pill--pending" },
     approved: { label: "معتمد — ظاهر على الدليل", cls: "pill--done" },
     rejected: { label: "مرفوض", cls: "pill--cancelled" }
+  };
+  /* حالة الاشتراك/الرسوم — إدارية فقط (لا تظهر للعملاء) */
+  var PAY_META = {
+    paid: { label: "✅ مدفوع", cls: "pill--done" },
+    unpaid: { label: "⏳ لم يُدفع", cls: "pill--pending" }
   };
   var activeJTab = "all";
 
@@ -63,6 +71,26 @@
   function loadProvState() { try { return JSON.parse(localStorage.getItem(LS_PROVIDERS) || "{}"); } catch (e) { return {}; } }
   function loadJoins() { try { return JSON.parse(localStorage.getItem(LS_JOINS) || "[]"); } catch (e) { return []; } }
   function saveJoins(l) { localStorage.setItem(LS_JOINS, JSON.stringify(l)); }
+  /* العمال المضافون يدوياً من الإدارة */
+  function loadCustom() { try { return JSON.parse(localStorage.getItem(LS_CUSTOM) || "[]"); } catch (e) { return []; } }
+  function saveCustom(l) { localStorage.setItem(LS_CUSTOM, JSON.stringify(l)); }
+  function nextCustomId() {
+    var n = parseInt(localStorage.getItem(LS_CUSTOM_SEQ) || "1000", 10) + 1;
+    localStorage.setItem(LS_CUSTOM_SEQ, String(n));
+    return "MP-" + n;
+  }
+  /* حالة الدفع لكل عامل (تتجاوز أي قيمة قديمة) */
+  function loadPaidMap() { try { return JSON.parse(localStorage.getItem(LS_PAID) || "{}"); } catch (e) { return {}; } }
+  function savePaidMap(m) { localStorage.setItem(LS_PAID, JSON.stringify(m)); }
+  function paidOf(p) {
+    var map = loadPaidMap();
+    if (map[p.id]) return map[p.id];
+    return p.paid === "paid" ? "paid" : "unpaid";
+  }
+  function payPill(p) {
+    var m = PAY_META[paidOf(p)] || PAY_META.unpaid;
+    return '<span class="pill ' + m.cls + '">' + m.label + "</span>";
+  }
 
   /* ===== Worker live status: نشط 🟢 / مشغول 🔴 / غير نشط ⚫ =====
      نفس المفتاح اللي بيقرأه الموقع الرئيسي — أي تغيير هنا ينعكس فوراً على كروت العمال. */
@@ -94,7 +122,7 @@
     savePStatus(s);
     localStorage.setItem("elhani_pstatus_seeded_v1", "1");
   }
-  /* كل عمال الدليل: الأساسيون + المعتمدون من طلبات الانضمام */
+  /* كل عمال الدليل: الأساسيون + المعتمدون من طلبات الانضمام + المضافون يدوياً */
   function allPlatformProviders() {
     var joins = loadJoins().filter(function (j) { return j.status === "approved"; }).map(function (j) {
       var c = D.categories.filter(function (x) { return x.id === j.cat; })[0];
@@ -103,10 +131,22 @@
         sub: j.jobs ? j.jobs.split("•")[0].trim() : "مقدم خدمة",
         jobs: j.jobs || "", area: (j.city || "الشرقية") + " — الشرقية",
         phone: j.phone || "", wa: j.wa || j.phone || "",
-        active: true, isJoin: true
+        active: true, isJoin: true, paid: j.paid || "unpaid"
       };
     });
-    return D.providers.concat(joins);
+    var custom = loadCustom().map(function (c) {
+      return {
+        id: c.id, name: c.name, emoji: c.emoji || catEmoji(c.cat), cat: c.cat,
+        sub: c.sub || (c.jobs ? c.jobs.split("•")[0].trim() : "مقدم خدمة"),
+        jobs: c.jobs || "", area: c.area || (c.city || "الشرقية") + " — الشرقية",
+        phone: c.phone || "", wa: c.wa || c.phone || "",
+        active: c.active !== false, manual: true, isNew: true,
+        paid: c.paid || "unpaid", notes: c.notes || ""
+      };
+    });
+    /* الدليل الموسّع المولّد (209 عامل — بحد أقصى 55 لكل قسم) — نفس بنية بيانات العمال */
+    var extras = (window.ELHANI_EXTRA_PROVIDERS || []).map(function (x) { return x; });
+    return D.providers.concat(joins).concat(custom).concat(extras);
   }
 
   /* ---------------- Seed demo join requests (first run only) ---------------- */
@@ -311,10 +351,29 @@
         '<td><div class="pv-name"><span class="pv-ava">' + p.emoji + "</span><div>" + p.name + '<span class="pv-sub">' + p.area + "</span></div></div></td>" +
         "<td>" + p.sub + "</td>" +
         '<td><span class="pill ' + meta.pill + '">' + meta.label + "</span></td>" +
+        '<td><div class="pay-cell">' + payPill(p) + '</div></td>' +
         '<td><div class="status-btns">' + statusButtons(p, st) + "</div></td>" +
         "</tr>";
     }).join("");
     bindStatusButtons("#quickBody");
+    bindPayButtons("#quickBody");
+  }
+
+  /* تبديل حالة الاشتراك (مدفوع ↔ لم يُدفع) لأي عامل */
+  function bindPayButtons(scope) {
+    $$(scope + " .pay-btn").forEach(function (b) {
+      b.addEventListener("click", function () {
+        var id = b.getAttribute("data-pay");
+        var p = allPlatformProviders().filter(function (x) { return x.id === id; })[0];
+        if (!p) return;
+        var map = loadPaidMap();
+        map[id] = paidOf(p) === "paid" ? "unpaid" : "paid";
+        savePaidMap(map);
+        renderAll();
+        var after = PAY_META[map[id]] || PAY_META.unpaid;
+        toast("ok", "تم تحديث الاشتراك ✓", p.name + " ← " + after.label);
+      });
+    });
   }
 
   /* ---------------- Join requests (approve / reject) ---------------- */
@@ -333,7 +392,7 @@
         '    <div class="join-card__name">' + j.name + ' <span class="pill ' + st.cls + '">' + st.label + "</span></div>" +
         '    <div class="join-card__meta">' + catName(j.cat) + " • " + (j.city || "الشرقية") + " • " + relTime(j.ts) + "</div>" +
         "  </div>" +
-        '  <div class="join-card__id">' + j.id + "</div>" +
+        '  <div class="join-card__id">' + j.id + '<span class="join-card__pay">' + payPill(j) + "</span></div>" +
         "</div>" +
         '<div class="join-card__jobs">🛠️ ' + j.jobs + "</div>" +
         '<div class="join-card__contact">' +
@@ -344,6 +403,7 @@
         (j.notes ? '<div class="join-card__notes">💬 ' + j.notes + "</div>" : "") +
         '<div class="join-card__actions">' +
         '  <button class="btn btn--gold btn--sm" data-approve="' + j.id + '">✓ اعتماد وإظهار على الدليل</button>' +
+        '  <button class="btn btn--ghost btn--sm" data-approve-full="' + j.id + '">🗂 اعتماد + بيانات كاملة</button>' +
         '  <button class="btn btn--danger btn--sm" data-reject="' + j.id + '">✕ رفض الطلب</button>' +
         "</div>" +
         "</div>";
@@ -359,6 +419,14 @@
         saveJoins(list);
         renderAll();
         toast("ok", wasApproved ? "الطلب ما كانش محتاج تغيير" : "تم الاعتماد ✓", wasApproved ? j.name : j.name + " — كارته ظهر على الدليل بأزرار التواصل");
+      });
+    });
+    /* اعتماد مع إدخال/مراجعة البيانات الكاملة وحالة الاشتراك */
+    $$("#joinList [data-approve-full]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        var j = loadJoins().filter(function (x) { return x.id === b.getAttribute("data-approve-full"); })[0];
+        if (!j) return;
+        openApproveModal(j);
       });
     });
     $$("#joinList [data-reject]").forEach(function (b) {
@@ -390,11 +458,158 @@
         "<td>" + p.area + "</td>" +
         "<td>" + tel + "</td>" +
         "<td>" + wa + "</td>" +
+        '<td><div class="pay-cell">' + payPill(p) + '<button class="pay-btn" data-pay="' + p.id + '" title="تبديل حالة الاشتراك (مدفوع / لم يُدفع)" aria-label="تبديل حالة الاشتراك">↻</button></div></td>' +
         '<td><span class="pill ' + meta.pill + '">' + meta.label + "</span></td>" +
         '<td><div class="status-btns">' + statusButtons(p, st) + "</div></td>" +
         "</tr>";
     }).join("");
     bindStatusButtons("#provBody");
+    bindPayButtons("#provBody");
+  }
+
+  /* ---------------- Manual add worker + approve-with-details modals ---------------- */
+  var approveTarget = null;
+
+  function openModal(id) {
+    var m = $(id);
+    if (!m) return;
+    m.classList.add("open");
+    document.body.style.overflow = "hidden";
+  }
+  function closeModal(id) {
+    var m = $(id);
+    if (!m) return;
+    m.classList.remove("open");
+    document.body.style.overflow = "";
+  }
+  function populateCat(sel, val) {
+    sel.innerHTML = D.categories.map(function (c) {
+      return '<option value="' + c.id + '"' + (c.id === val ? " selected" : "") + ">" + c.icon + " " + c.name + "</option>";
+    }).join("");
+    if (val && sel.value !== val) sel.value = val;
+  }
+  function populateCities(sel, val) {
+    sel.innerHTML = D.cities.map(function (c) {
+      return '<option value="' + c + '"' + (c === val ? " selected" : "") + ">" + c + "</option>";
+    }).join("");
+    if (val && sel.value !== val) sel.value = val;
+  }
+  function validate(el, ok) {
+    var wrap = el.closest(".afield");
+    wrap.classList.toggle("invalid", !ok);
+    return ok;
+  }
+  function clearErr(el) {
+    var wrap = el.closest(".afield");
+    if (wrap) wrap.classList.remove("invalid");
+  }
+
+  function initWorkerModal() {
+    populateCat($("#wCat"));
+    populateCities($("#wCity"));
+    $("#addWorkerBtn").addEventListener("click", function () {
+      $("#addWorkerForm").reset();
+      $$("#workerModal input, #workerModal select, #workerModal textarea").forEach(function (el) { clearErr(el); });
+      openModal("#workerModal");
+    });
+    $("#addWorkerForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+      var name = $("#wName"), phone = $("#wPhone"), cat = $("#wCat"), city = $("#wCity"), jobs = $("#wJobs"), wa = $("#wWa"), paid = $("#wPaid"), notes = $("#wNotes");
+      var ok = true;
+      ok = validate(name, name.value.trim().length >= 3) && ok;
+      ok = validate(phone, /^01[0-9]{9}$/.test(phone.value.trim())) && ok;
+      ok = validate(cat, !!cat.value) && ok;
+      ok = validate(city, !!city.value) && ok;
+      ok = validate(jobs, jobs.value.trim().length >= 3) && ok;
+      var waVal = wa.value.trim();
+      ok = validate(wa, !waVal || /^01[0-9]{9}$/.test(waVal)) && ok;
+      if (!ok) { toast("err", "راجع البيانات", "في حقل أو أكتر محتاجين تصحيح"); return; }
+
+      var c = D.categories.filter(function (x) { return x.id === cat.value; })[0];
+      var rec = {
+        id: nextCustomId(),
+        ts: Date.now(),
+        name: name.value.trim(),
+        emoji: c ? c.icon : "🛠️",
+        cat: cat.value,
+        sub: jobs.value.trim().split("•")[0].trim(),
+        area: city.value + " — الشرقية",
+        jobs: jobs.value.trim(),
+        city: city.value,
+        phone: phone.value.trim(),
+        wa: waVal,
+        notes: notes.value.trim(),
+        paid: paid.value,
+        active: true,
+        manual: true,
+        isNew: true
+      };
+      var list = loadCustom();
+      list.unshift(rec);
+      saveCustom(list);
+      var map = loadPaidMap();
+      map[rec.id] = rec.paid;
+      savePaidMap(map);
+
+      renderAll();
+      closeModal("#workerModal");
+      toast("ok", "تمت الإضافة ✓", rec.name + " — ظهر على الدليل فوراً (ID: " + rec.id + ")");
+    });
+  }
+
+  function openApproveModal(j) {
+    approveTarget = j.id;
+    $("#aName").value = j.name || "";
+    $("#aPhone").value = j.phone || "";
+    $("#aWa").value = j.wa || "";
+    $("#aJobs").value = j.jobs || "";
+    $("#aNotes").value = j.notes || "";
+    populateCat($("#aCat"), j.cat);
+    populateCities($("#aCity"), j.city);
+    $("#aPaid").value = paidOf(j);
+    $$("#approveModal input, #approveModal select, #approveModal textarea").forEach(function (el) { clearErr(el); });
+    openModal("#approveModal");
+  }
+
+  function initApproveModal() {
+    $("#approveForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+      if (!approveTarget) return;
+      var list = loadJoins();
+      var j = list.filter(function (x) { return x.id === approveTarget; })[0];
+      if (!j) return;
+      var name = $("#aName"), phone = $("#aPhone"), cat = $("#aCat"), city = $("#aCity"), jobs = $("#aJobs"), wa = $("#aWa"), paid = $("#aPaid"), notes = $("#aNotes");
+      var ok = true;
+      ok = validate(name, name.value.trim().length >= 3) && ok;
+      ok = validate(phone, /^01[0-9]{9}$/.test(phone.value.trim())) && ok;
+      ok = validate(cat, !!cat.value) && ok;
+      ok = validate(city, !!city.value) && ok;
+      ok = validate(jobs, jobs.value.trim().length >= 3) && ok;
+      var waVal = wa.value.trim();
+      ok = validate(wa, !waVal || /^01[0-9]{9}$/.test(waVal)) && ok;
+      if (!ok) { toast("err", "راجع البيانات", "في حقل أو أكتر محتاجين تصحيح"); return; }
+
+      var wasApproved = j.status === "approved";
+      j.status = "approved";
+      j.name = name.value.trim();
+      j.phone = phone.value.trim();
+      j.cat = cat.value;
+      j.catName = catName(cat.value);
+      j.city = city.value;
+      j.jobs = jobs.value.trim();
+      j.wa = waVal;
+      j.notes = notes.value.trim();
+      j.paid = paid.value;
+      saveJoins(list);
+      var map = loadPaidMap();
+      map[j.id] = paid.value;
+      savePaidMap(map);
+
+      renderAll();
+      closeModal("#approveModal");
+      approveTarget = null;
+      toast("ok", wasApproved ? "تم تحديث البيانات ✓" : "تم الاعتماد بالتفاصيل ✓", j.name + " — كارته على الدليل (" + PAY_META[paid.value].label + ")");
+    });
   }
 
   /* ---------------- Settings actions ---------------- */
@@ -429,6 +644,19 @@
     seedPStatus();
     initAuth();
     initSettings();
+    initWorkerModal();
+    initApproveModal();
+    /* إغلاق المودالات: زر الإغلاق / الخلفية / Escape */
+    $$("[data-close]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        var m = b.closest(".amodal");
+        if (m) closeModal("#" + m.id);
+      });
+    });
+    document.addEventListener("keydown", function (e) {
+      if (e.key !== "Escape") return;
+      $$(".amodal.open").forEach(function (m) { closeModal("#" + m.id); });
+    });
     $$("#sideNav .side__item").forEach(function (b) {
       b.addEventListener("click", function () { switchView(b.getAttribute("data-view")); });
     });
@@ -442,6 +670,12 @@
         activeJTab = t.getAttribute("data-jtab");
         renderJoins();
       });
+    });
+    /* انعكاس لحظي: طلب انضمام جديد أو إضافة من الموقع → تحديث اللوحة فوراً */
+    window.addEventListener("storage", function (e) {
+      if (e.key !== LS_JOINS && e.key !== LS_CUSTOM && e.key !== LS_PSTATUS) return;
+      if (!AUTH.isAuthed()) return;
+      renderAll();
     });
     if (AUTH.isAuthed()) enterApp();
   });

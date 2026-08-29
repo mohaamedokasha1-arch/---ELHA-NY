@@ -60,13 +60,23 @@ elhani/
 ├── index.html          ← Main landing experience (Arabic RTL)
 ├── admin.html          ← Secure admin dashboard (password-protected)
 ├── css/
-│   ├── style.css       ← Landing design system ("Midnight Gold")
+│   ├── style.css       ← Landing design system ("Pearl & Sapphire")
 │   └── admin.css       ← Admin dashboard styles
 ├── js/
 │   ├── data.js         ← Platform data (services, providers, testimonials)
+│   ├── data-500.js     ← Generated provider dataset (209 workers, ELHANI_EXTRA_PROVIDERS)
+│   ├── data-560.js     ← Generated directory (469 records — 209 workers + 260 customers)
+│   ├── data-testimonials.js ← Generated testimonials (24 reviews, ELHANI_TESTIMONIALS)
 │   ├── auth.js         ← SHA-256 checkpoint + session & lockout engine
 │   ├── app.js          ← Landing logic (particles, filters, direct contact)
-│   └── admin.js        ← Dashboard logic (views, stats, CRUD)
+│   ├── bottomnav.js    ← Mobile-style bottom navigation (scroll-spy)
+│   ├── directory.js    ← Landing records table (tabs, search, pagination)
+│   ├── testimonials.js ← Landing reviews carousel (tabs, slider, rating stats)
+│   └── admin.js        ← Dashboard logic (views, stats, CRUD, workers management)
+├── scripts/
+│   ├── generate-providers.js ← توليد البيانات الموسّعة (بحد أقصى 55 عامل لكل قسم)
+│   ├── generate-directory.js ← توليد سجل العمال والزبائن (469 سجل)
+│   └── generate-testimonials.js ← توليد آراء العملاء (24 رأي واقعي)
 └── assets/
     ├── logo-mark.png   ← AI-generated gold emblem (the "bolt-wing shield")
     ├── hero-rider.png  ← Cinematic night delivery rider
@@ -84,21 +94,23 @@ python3 -m http.server 8000
 
 ---
 
-## 🎨 Brand Identity — "Midnight Gold"
+## 🎨 Brand Identity — "Pearl & Sapphire" (Light Luxe)
 
 ### Color Palette
 | Role | Swatch | Hex |
 |---|---|---|
-| Background Void | ⬛ | `#07090E` |
-| Slate Panel | ⬛ | `#10141D` |
-| Royal Gold (primary) | 🟡 | `#D4AF37` |
-| Gold Highlight | 🟡 | `#F9E27D` |
-| Electric Cyan (secondary) | 🩵 | `#00E5FF` |
-| Neon Amber (tertiary) | 🟠 | `#FFB020` |
-| Burnt Orange (alerts) | 🟧 | `#FF6B35` |
-| Success Green | 🟢 | `#2EE6A8` |
+| Ivory White (base) | ⬜ | `#F3F7FD` |
+| Clean White Panel | ⬜ | `#FFFFFF` |
+| Pale Sapphire Panel | 🟦 | `#EEF4FB` |
+| Calm Sapphire (primary) | 🔵 | `#2F6FD0` |
+| Light Navy Text | ⬛ | `#12233F` |
+| Champagne Gold (brand) | 🟡 | `#E3B94F` |
+| Gold Highlight | 🟡 | `#F7DC8C` |
+| Emerald (trust) | 🟢 | `#17A97E` |
+| Aqua Cyan (speed) | 🩵 | `#1FA8C9` |
+| Soft Amber (urgency) | 🟠 | `#E8A33D` |
 
-**Rule of thumb:** gold = brand & money, cyan = speed & tech, amber/orange = urgency & action.
+**Rule of thumb:** white/ivory = clean & trustworthy, calm sapphire = confidence & depth, gold = premium brand, emerald green = hygiene/verified/success.
 
 ### Typography
 - **Display / Headlines:** `Cairo` (700–900) — bold, modern, unmistakably Arabic.
@@ -154,17 +166,22 @@ A metallic-gold lightning bolt (speed) fused with forward-leaning wings (motion,
 - 3-step "How it works" (اختار القسم ← شوف المتاح 🟢 ← كلمه فوراً) with rotating conic number rings
 - **Workers directory:** text search + **Sharqia center filter** + category chips, verified badges, **live status** (🟢 نشط / 🔴 مشغول / ⚫ غير نشط), active-first ordering, and per-worker **📞 tel: + ✆ wa.me buttons** — **no prices, no booking, no ratings clutter**
 - **Join-us section + modal**: worker onboarding via admin-approval gate (see above)
-- Testimonials, 24/7 CTA band, **🚨 emergency button (0122 599 0584)**, full footer, floating WhatsApp/Call/Back-to-top (emergency channels on the admin number)
+- **Testimonials carousel (#reviews):** 24 realistic Egyptian reviews — 11 governorates (11× الشرقية + القاهرة، الجيزة، القليوبية، الدقهلية، الغربية، المنوفية، الإسماعيلية، بورسعيد، السويس، دمياط), all 4 service categories (دليفري 6 • صيانة 7 • أوناش 5 • معيشية 6), 4–5★ only, auto-playing slider (pause on hover/touch), filter chips with counts, rating summary (avg 4.8 + facts), arrows/dots/keyboard/swipe — price-free texts about speed, honesty & performance
+- 24/7 CTA band, **🚨 emergency button (0122 599 0584)**, full footer, floating WhatsApp/Call/Back-to-top (emergency channels on the admin number)
 - Ripple buttons, toast system, RTL-perfect layout, `prefers-reduced-motion` respected
 
-### Admin (`admin.html`)
+### Admin (`admin.html`) — Managers' Management System
 - **Secure gate:** master password verified via **SHA-256 hash comparison** (plain text never stored), brute-force lockout (5 fails → 30 s), show/hide password, "remember me" (30 days vs 12 h session)
 - **Session engine:** token in `localStorage` with TTL, live expiry watcher (auto-logout), clean lockout
 - **Overview:** 5 KPI cards (workers total, 🟢/🔴/⚫ counts, pending joins), per-category worker distribution bars, latest join requests feed, and a quick status-control table
-- **Join requests (طلبات الانضمام):** live review queue with pending-approval badge in the sidebar, approve (shows the worker's card + contact buttons on the site instantly) / reject with confirmation, status tabs
-- **Workers (العمال والحالات):** full table with the worker's own 📞/✆ links and the 3-state live status control (reflected instantly on the site)
+- **Join requests (طلبات الانضمام):** every join request from the site appears here for review (sidebar badge = count of pending). Actions:
+  - **✓ اعتماد** (quick) — instant approval with the applicant's own data
+  - **🗂 اعتماد + بيانات كاملة** — review/edit full data (name, phone, WhatsApp, category, Sharqia center, specialty) + set subscription status before publishing
+  - **✕ رفض** — archived, stays hidden
+- **Workers (العمال والحالات):** full table with per-worker 📞/✆ links, the 3-state live status control, and the **subscription column** (✅ مدفوع / ⏳ لم يُدفع — admin-only, never shown to customers) with a one-click toggle (`elhani_provider_paid_v1`). **➕ إضافة عامل جديد** button opens a full manual-add form: name, phone, WhatsApp, category, center, specialty, notes + paid status → saved to `elhani_custom_providers_v1` (ID `MP-####`) and appears on the landing page instantly with a "🛡️ أضافته الإدارة — موثّق" badge.
 - **Settings:** session info, one-click "reset all workers to 🟢 نشط"
-- Arabic RTL throughout, same Midnight Gold system
+- The dashboard listens to cross-tab `storage` events, so new join requests / manual adds reflect live in both directions.
+- Arabic RTL throughout, same Pearl & Sapphire system
 
 ### Security notes (honest engineering)
 - This build ships the validation **client-side** (it's a static platform). The password exists only as a SHA-256 digest + the code uses `crypto.subtle` with a pure-JS fallback.
@@ -172,8 +189,60 @@ A metallic-gold lightning bolt (speed) fused with forward-leaning wings (motion,
 
 ---
 
+## 📦 Generated Provider Dataset (209 workers — realistic per-category counts)
+
+The platform ships with a **209-worker generated pool, capped at 55 workers per category** — realistic, varied sizes per trade instead of huge numbers. Merged into the landing page (`D.providers`), the admin tables, and the live status / subscription systems — with zero code duplication.
+
+**Generator:** `node scripts/generate-providers.js` → writes `js/data-500.js` (`window.ELHANI_EXTRA_PROVIDERS`). Deterministic (`SEED` at the top) — rerunning gives the exact same dataset. The file is **written only after every validation passes**.
+
+**Data guarantees (validated at generation time):**
+- **أسماء مصرية حقيقية 100%** — first name + middle + family from ~250 distinct real Egyptian names, all **unique**, no duplicates.
+- **أرقام مصرية صحيحة وفريدة** — `01[0125]XXXXXXXX` (11 digits), 209 unique, never colliding with the core providers' numbers.
+- **أعداد متباينة لكل قسم (1..55):** دليفري 55 • صيانة طارئة 53 • معيشية 51 • أوناش 50 (open `CATS` weights — validator refuses any category above 55).
+- **النطاق الجغرافي:** only Sharqia centers — الزقازيق 61 • العاشر من رمضان 38 • بلبيس 25 • منيا القمح 19 • ديرب نجم 15 • أبو حماد 13 • ههيا 10 • فاقوس 10 • القنايات 4 • أبو كبير 4 • أبو بكر الصديق / تلة أبا / حماطة / نقطة الشرقية / سيد زرين 2 each (+ open `CITIES` weights in the script).
+- Every worker has a realistic specialty / services list + emoji, `tel:`/`wa.me` buttons, and defaults to 🟢 نشط (status still admin-controlled per worker).
+
+The site still renders every worker as a normal card — search, city filter, category chips, availability filter, and the admin status/subscription controls all work across the full 224-worker directory (15 core + 209 generated).
+
+## 📋 Generated Directory — سجل الحَقني (469 records)
+
+A dedicated records section near the bottom of the landing page (`#records`) that ships a **469-record directory: 209 workers/providers (max 55 per trade) + 260 customers/clients** — browsable without touching the existing cards.
+
+**Generator:** `node scripts/generate-directory.js` → writes `js/data-560.js` (`window.ELHANI_DIRECTORY = {meta:{total:469,workers:209,customers:260}, people:[...]}`). Deterministic (`SEED = 20260831`); rerunning always produces the same dataset, and the file is **written only after every validation passes** (the validator exits non-zero without saving on failure).
+
+**Data guarantees (validated at generation time):**
+- **أسماء مصرية فريدة 100%** — first + father + family from ~330 distinct real Egyptian names; **0 duplicates inside the 469** and **0 collisions** with `data.js` + `data-500.js` names.
+- **أرقام مصرية صحيحة وفريدة** — 469 unique `01[0125]XXXXXXXX` numbers, never colliding within the record set.
+- **أعداد عمال متباينة لكل قسم (1..55):** دليفري 55 • صيانة 53 • معيشية 51 • أوناش 50; customers — دليفري 80 • صيانة 75 • معيشية 60 • أوناش 45 (open weights in the script).
+- **النطاق الجغرافي:** only 15 Sharqia centers (الزقازيق 138 • العاشر 84 • بلبيس 57 • منيا القمح 42 • ديرب نجم 34 • أبو حماد 28 • ههيا 24 • فاقوس 24 • القنايات 10 • أبو كبير 8 • أبو بكر الصديق / تلة أبا / حماطة / نقطة الشرقية / سيد زرين 4 each).
+- **Realistic details:** each worker lists a specialty + 2 services; each customer has a "طلب: …" note (delivery requests include an origin → destination route, e.g. "من الزقازيق إلى بلبيس").
+- **Statuses:** workers — 🟢 نشط / 🟠 مشغول / ⚪ غير نشط (80/12/8%); customers — 🆕 جديد / 🔵 قيد التنفيذ / ✅ تم (30/42/28%).
+
+**Section behavior (landing only, purely additive — admin panel untouched):**
+- 7-column table: ID • النوع • الاسم • الموبايل • المركز • التفاصيل • الحالة
+- **Tabs** الكل / عمال / زبائن with live counts • **debounced search** (name, phone, city, ID) • **pagination: 12 rows/page** (40 pages) with prev/next + page buttons with ellipses, auto-disabled at the edges, smooth-scroll on page change.
+- `js/directory.js` guards on load — if `js/data-560.js` is missing it returns silently and the site is untouched.
+- E2E (`e2e.test.js`) now covers the directory: dataset size/uniqueness, valid Egyptian phones, tab filtering, next/prev pagination — full suite **120/120 passing**.
+
+## 💬 Generated Testimonials — آراء العملاء (24 reviews)
+
+The landing `#reviews` section now ships a **24-review carousel** of realistic Egyptian customer experiences — covering every service category and 11 governorates.
+
+**Generator:** `node scripts/generate-testimonials.js` → writes `js/data-testimonials.js` (`window.ELHANI_TESTIMONIALS = {meta:{total:24,avg:4.8,governorates:11}, items:[...]}`). Deterministic (`SEED = 20260832`); the file is **written only after every validation passes** (unique names, ≥10 Sharqia reviews, all 4 categories, 4–5★ only, price-free texts, no `undefined`).
+
+**Content guarantees:**
+- **أسماء مصرية حقيقية متنوعة** — 24 unique reviewer names, **0 collisions** with `data.js` / `data-500.js` / `data-560.js` names.
+- **من كل مصر:** 11 × الشرقية (الزقازيق، بلبيس، العاشر، ههيا، فاقوس، منيا القمح) + القاهرة، الجيزة، القليوبية، الدقهلية، الغربية، المنوفية، الإسماعيلية، بورسعيد، السويس، دمياط.
+- **كل الأقسام:** دليفري 6 • صيانة طارئة 7 • أوناش 5 • معيشية 6 — كل رأي مربوط بخدمة حقيقية (توصيل فوري، سباكة طوارئ، أونش 25 طن، غسيل سجاد…).
+- **نصوص مصرية واقعية** عن سرعة الخدمة، أمانة العمال، والالتزام — **صفر كلام أسعار** (فاحص دائم في المولّد يرفض "السعر/جنيه/ج.م/يبدأ من").
+- **تقييمات 4–5★ فقط** (متوسط 4.8) مع `since` واقعي (منذ أسبوع… منذ سنة).
+
+**Section behavior (additive, falls back gracefully):**
+- `js/testimonials.js` renders a **rating summary** (4.8 + عدد الآراء + عدد المحافظات + تواصل مباشر), **filter tabs** with live counts, and an **auto-playing slider** (every 5.2s) — 3 cards desktop / 2 tablet / 1 mobile, arrows + dots + swipe + keyboard, pause on hover/touch, RTL-aware transforms.
+- If `js/data-testimonials.js` is missing it returns silently and the original 3 static reviews from `data.js` remain (app.js fallback untouched).
+
 ## 🧪 Testing
-`e2e.test.js` is a full jsdom end-to-end suite (85+ assertions) covering: Sharqia-only worker scope, RTL, the total removal of orders/prices ("اطلب الآن", booking modal, ج.م — all gone), per-worker `tel:`/`wa.me` buttons (own numbers, not the admin's), direct category→workers navigation (service cards + footer links), city/availability filters, live status sync via `storage` events, the full join-request → admin-approval → public-card loop, admin login (wrong + exact master password), session lifecycle, worker status controls from both overview and workers views, the status reset action, and logout.
+`e2e.test.js` is a full jsdom end-to-end suite (133 assertions) covering: Sharqia-only worker scope, RTL, the total removal of orders/prices ("اطلب الآن", booking modal, ج.م — all gone), per-worker `tel:`/`wa.me` buttons (own numbers, not the admin's), direct category→workers navigation (service cards + footer links), city/availability filters, live status sync via `storage` events, the full join-request → admin-approval → public-card loop, admin login (wrong + exact master password), session lifecycle, worker status controls from both overview and workers views, the status reset action, logout, the 469-record directory — including the **55-per-category cap** and varied per-trade counts (dataset guarantees, tabs, pagination) — and the **24-review testimonials carousel** (unique Egyptian names, 11 governorates, all 4 categories, 4–5★ only, price-free texts, arrows, filter tabs, rating summary).
 ```bash
 npm install jsdom && node e2e.test.js
 ```
