@@ -33,7 +33,10 @@
     } catch (e) {}
   }
   function defaultStatusFor(p) { return p.isNew ? "active" : (p.active ? "active" : "inactive"); }
-  function statusOf(p) { return loadPStatus()[p.id] || defaultStatusFor(p); }
+  function statusOf(p) {
+    if (p.isDemo && p.demoStatus) return p.demoStatus; /* عرض بصري للتجريبيين — من غير لمس تخزين الإدارة */
+    return loadPStatus()[p.id] || defaultStatusFor(p);
+  }
 
   /* أرقام مصرية → صيغ الاتصال المباشر */
   function telHref(phone) { return "tel:+20" + String(phone || "").replace(/^0/, ""); }
@@ -291,25 +294,31 @@
   function renderProviders() {
     var grid = $("#provGrid");
     if (!grid) return;
-    var all = D.providers.concat(approvedProviders());
+    var all = D.providers.concat(D.demoProviders || [], approvedProviders());
     var ST_LABEL = { active: "نشط — متاح الآن", busy: "مشغول حالياً", inactive: "غير نشط" };
     grid.innerHTML = all.map(function (p) {
       var st = statusOf(p);
       var stHtml = '<span class="status-dot st--' + st + '" title="الحالة تحدّثها الإدارة أوتوماتيكياً"><i></i> ' + (ST_LABEL[st] || ST_LABEL.active) + "</span>";
       var newBadge = p.isNew ? '<span class="badge badge--new">✨ جديد — اعتمدته الإدارة</span>' : "";
-      var contact =
-        '<a class="btn btn--call btn--sm" href="' + telHref(p.phone) + '" data-call="' + p.id + '" aria-label="اتصال هاتفي مباشر بـ ' + p.name + '">📞 اتصال فوري</a>' +
-        '<a class="btn btn--wa btn--sm" href="' + waHref(p.wa || p.phone) + '" target="_blank" rel="noopener" data-wa="' + p.id + '" aria-label="دردشة واتساب مع ' + p.name + '">✆ واتساب</a>';
+      /* العمال التجريبيين: شارة واضحة + من غير علامة الاعتماد ✓ */
+      var demoBadge = p.isDemo ? '<span class="badge badge--demo">🧪 بيانات تجريبية للعرض</span>' : "";
+      var verify = p.isDemo ? "" : '<span class="verify" title="معتمد من إدارة الحقني">✓</span>';
+      /* التجريبيين مفيهمش أرقام — الأزرار للعرض فقط والضغط عليها بيوضح إنها بيانات تجريبية */
+      var contact = p.isDemo
+        ? '<button type="button" class="btn btn--call btn--sm btn--demo" data-demo-contact>📞 اتصال فوري</button>' +
+          '<button type="button" class="btn btn--wa btn--sm btn--demo" data-demo-contact>✆ واتساب</button>'
+        : '<a class="btn btn--call btn--sm" href="' + telHref(p.phone) + '" data-call="' + p.id + '" aria-label="اتصال هاتفي مباشر بـ ' + p.name + '">📞 اتصال فوري</a>' +
+          '<a class="btn btn--wa btn--sm" href="' + waHref(p.wa || p.phone) + '" target="_blank" rel="noopener" data-wa="' + p.id + '" aria-label="دردشة واتساب مع ' + p.name + '">✆ واتساب</a>';
       return (
-        '<article class="prov gold-frame' + (p.isNew ? " prov--new" : "") + ' prov--' + st + '" data-status="' + st + '" data-cat="' + p.cat + '" data-name="' + (p.name + " " + p.sub + " " + p.jobs + " " + p.area).toLowerCase() + '">' +
+        '<article class="prov gold-frame' + (p.isNew ? " prov--new" : "") + (p.isDemo ? " prov--demo" : "") + ' prov--' + st + '" data-status="' + st + '" data-cat="' + p.cat + '" data-name="' + (p.name + " " + p.sub + " " + p.jobs + " " + p.area).toLowerCase() + '">' +
         '  <div class="prov__top">' +
         '    <div class="prov__avatar">' + p.emoji + "</div>" +
         "    <div>" +
-        '      <div class="prov__name">' + p.name + '<span class="verify" title="معتمد من إدارة الحقني">✓</span></div>' +
+        '      <div class="prov__name">' + p.name + verify + "</div>" +
         '      <div class="prov__cat">' + p.sub + " • " + p.area + "</div>" +
         "    </div>" +
         "  </div>" +
-        '  <div class="prov__badges">' + newBadge + '<span class="badge">🛠️ ' + p.jobs + "</span></div>" +
+        '  <div class="prov__badges">' + newBadge + demoBadge + '<span class="badge">🛠️ ' + p.jobs + "</span></div>" +
         '  <div class="prov__meta">' + stHtml + "</div>" +
         '  <div class="prov__foot prov__contact">' + contact + "</div>" +
         "</article>"
@@ -374,6 +383,12 @@
       if (!el) return;
       if (el.tagName === "A") e.preventDefault();
       gotoCategory(el.getAttribute("data-goto-cat"));
+    });
+    /* أزرار العمال التجريبيين — عرض فقط، بتوضح للزائر إنها بيانات تجريبية */
+    document.addEventListener("click", function (e) {
+      var b = e.target.closest("[data-demo-contact]");
+      if (!b) return;
+      toast("gold", "كارت تجريبي للعرض 🧪", "الأرقام بتظهر بس للعمال الحقيقيين بعد اعتماد الإدارة من لوحة التحكم");
     });
     document.addEventListener("keydown", function (e) {
       if (e.key !== "Enter" && e.key !== " ") return;

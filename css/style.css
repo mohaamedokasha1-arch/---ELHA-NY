@@ -813,3 +813,22 @@ ul{list-style:none}
   .disclaimer__panel{grid-template-columns:1fr;padding:26px 22px;gap:18px}
   .disclaimer__icon{width:56px;height:56px;font-size:1.6rem}
 }
+
+/* ============================================================
+   العمال التجريبيون للعرض (Demo providers)
+   كروت مليانة بشكل حي — لكن معلَّمة بوضوح وغير قابلة للاتصال
+   (قواعد جديدة فقط بنفس الثيم — بدون لمس أي ستايل قائم)
+   ============================================================ */
+.badge--demo{
+  color:var(--amber);border-color:rgba(255,176,32,.45);background:rgba(255,176,32,.08);
+  font-family:var(--font-display);
+}
+.prov--demo .prov__avatar{
+  border-style:dashed;opacity:.9;
+}
+.prov--demo .prov__name{opacity:.95}
+.btn--demo{
+  opacity:.55;filter:saturate(.75);cursor:not-allowed;
+}
+.btn--demo:hover{transform:none !important;box-shadow:none !important}
+.btn--demo:active{transform:none !important}

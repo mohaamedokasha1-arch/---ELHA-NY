@@ -33,8 +33,29 @@ const ADMIN = "01225990584";
   await new Promise(r => { w.addEventListener("load", r); setTimeout(r, 4000); });
   await sleep(300);
 
-  check("NO fake providers rendered (directory starts empty)", d.querySelectorAll("#provGrid .prov").length === 0);
-  check("empty state shown for empty directory", d.querySelector("#provEmpty").classList.contains("show"));
+  /* ===== العمال التجريبيين المعلَّمين (Demo providers) ===== */
+  const demo = w.ELHANI_DATA.demoProviders;
+  const perCat = c => demo.filter(p => p.cat === c).length;
+  check("65 عامل تجريبي لكل قسم (260)", demo.length === 260 && ["delivery", "cranes", "maintenance", "lifestyle"].every(c => perCat(c) === 65));
+  check("أسماء مصرية شائعة بدون أي تكرار", new Set(demo.map(p => p.name)).size === 260);
+  check("التجريبيين من غير أي أرقام اتصال مخزنة", demo.every(p => p.phone === "" && p.wa === ""));
+  check("260 كارت ظاهرة في الدليل", d.querySelectorAll("#provGrid .prov").length === 260);
+  check("كل كارت تجريبي عليه شارة «بيانات تجريبية للعرض»", d.querySelectorAll("#provGrid .prov--demo .badge--demo").length === 260);
+  check("التجريبيين من غير علامة اعتماد ✓", d.querySelectorAll("#provGrid .prov--demo .verify").length === 0);
+  check("التجريبيين من غير أي زر اتصال/واتساب حقيقي (روابط tel/wa)", d.querySelectorAll("#provGrid .prov--demo a.btn--call, #provGrid .prov--demo a.btn--wa").length === 0);
+  check("أزرار العرض التجريبية شغالة (بتوضح للزائر)", d.querySelectorAll("#provGrid .prov--demo [data-demo-contact]").length === 520);
+  check("empty state مخفي والدليل مليان", !d.querySelector("#provEmpty").classList.contains("show"));
+
+  /* الضغط على زر تجريبي → توست يوضح إنه عرض فقط */
+  d.querySelector("#provGrid .prov--demo [data-demo-contact]").click();
+  await sleep(50);
+  check("ضغطة زر تجريبي → توست «كارت تجريبي للعرض»", !!d.querySelector(".toast--gold") && d.querySelector(".toast--gold").textContent.includes("تجريبي"));
+
+  /* ===== عدادات صادقة (بدون أرقام إنجازات ملفقة) ===== */
+  const counts = [...d.querySelectorAll("#stats .cnt")].map(c => c.getAttribute("data-count"));
+  check("العدادات: 4 أقسام / 15 مركز / 24-7 / 100% مراجعة يدوية", counts.join(",") === "4,15,24,100" && !!d.querySelector("#stats .suf"));
+  const statsText = d.querySelector("#stats").textContent;
+  check("مفيش أرقام ملفقة قديمة (12480 / 850 / تقييم 4.9)", statsText.indexOf("12480") === -1 && statsText.indexOf("850") === -1 && statsText.indexOf("4.9") === -1);
   check("service cards rendered (4)", d.querySelectorAll("#svcGrid .svc-card").length === 4);
   check("NO fake testimonials — section removed", d.querySelector("#reviews") === null && d.querySelector("#testiGrid") === null);
   const tickerItems = [...d.querySelectorAll("#tickerTrack .ticker__item")];
@@ -78,17 +99,17 @@ const ADMIN = "01225990584";
   svcCard.click();
   await sleep(50);
   let vis = [...d.querySelectorAll("#provGrid .prov")].filter(c => !c.classList.contains("hide"));
-  check("clicking قسم الأوناش → no workers yet (empty, no fakes)", vis.length === 0);
+  check("clicking قسم الأوناش → عمال القسم بس (65 تجريبي)", vis.length === 65 && vis.every(c => c.dataset.cat === "cranes"));
   check("cranes chip became active", d.querySelector('#filterChips .chip[data-filter="cranes"]').classList.contains("active"));
   d.querySelector('#filterChips .chip[data-filter="all"]').click();
   await sleep(50);
-  check("back to all → still 0 cards", d.querySelectorAll("#provGrid .prov:not(.hide)").length === 0);
+  check("back to all → 260 كارت", d.querySelectorAll("#provGrid .prov:not(.hide)").length === 260);
 
   // footer category deep-link works the same way
   d.querySelector('.footer__links a[data-goto-cat="delivery"]').click();
   await sleep(50);
   vis = [...d.querySelectorAll("#provGrid .prov")].filter(c => !c.classList.contains("hide"));
-  check("footer قسم التوصيل → no workers yet (empty)", vis.length === 0);
+  check("footer قسم التوصيل → 65 عامل دليفري", vis.length === 65 && vis.every(c => c.dataset.cat === "delivery"));
   d.querySelector('#filterChips .chip[data-filter="all"]').click();
 
   // city filter select
@@ -96,16 +117,18 @@ const ADMIN = "01225990584";
   d.querySelector("#provCity").value = "بلبيس";
   fire(d.querySelector("#provCity"), "change");
   const bilbes = [...d.querySelectorAll("#provGrid .prov")].filter(c => !c.classList.contains("hide"));
-  check("city filter 'بلبيس' → 0 عمال (مفيش وهميين)", bilbes.length === 0);
+  const bilbesExpected = demo.filter(p => p.area.indexOf("بلبيس") === 0).length;
+  check("city filter 'بلبيس' → عمال بلبيس التجريبيين بس", bilbes.length === bilbesExpected && bilbes.every(c => c.dataset.name.includes("بلبيس")));
   d.querySelector("#provCity").value = "";
   fire(d.querySelector("#provCity"), "change");
 
   // "المتاح الآن فقط" quick filter
+  const activeDemos = demo.filter(p => p.demoStatus !== "busy").length;
   d.querySelector("#availChip").click();
   vis = [...d.querySelectorAll("#provGrid .prov")].filter(c => !c.classList.contains("hide"));
-  check('"المتاح الآن فقط" → 0 عمال (مفيش وهميين)', vis.length === 0);
+  check('"المتاح الآن فقط" → النشط التجريبي بس', vis.length === activeDemos && vis.every(c => c.dataset.status === "active"));
   d.querySelector("#availChip").click();
-  check("إلغاء الفلتر → فاضية برضه", d.querySelectorAll("#provGrid .prov:not(.hide)").length === 0);
+  check("إلغاء الفلتر → ترجع 260 كارت", d.querySelectorAll("#provGrid .prov:not(.hide)").length === 260);
 
   /* ===== إخلاء المسئولية الرسمي عن الأرقام والبيانات ===== */
   const disc = d.querySelector("#disclaimer");
@@ -164,27 +187,27 @@ const ADMIN = "01225990584";
   const stEv = new w.Event("storage");
   Object.defineProperty(stEv, "key", { value: "elhani_provider_status_v1" });
   w.dispatchEvent(stEv);
-  const busyCard = d.querySelector("#provGrid .prov");
+  const busyCard = d.querySelector("#provGrid .prov:not(.prov--demo)");
   check("storage event → كارت العامل بقى مشغول فوراً", busyCard && busyCard.dataset.status === "busy" && busyCard.classList.contains("prov--busy"));
   ps[jid] = "active";
   w.localStorage.setItem("elhani_provider_status_v1", JSON.stringify(ps));
   const stEv2 = new w.Event("storage");
   Object.defineProperty(stEv2, "key", { value: "elhani_provider_status_v1" });
   w.dispatchEvent(stEv2);
-  check("الرجوع للنشط → الكارت اتحدّث فوراً", d.querySelector("#provGrid .prov").dataset.status === "active");
+  check("الرجوع للنشط → الكارت اتحدّث فوراً", d.querySelector("#provGrid .prov:not(.prov--demo)").dataset.status === "active");
 
-  // search finds the REAL approved worker
+  // search finds the REAL approved worker (وليس أي كارت تجريبي)
   const q = d.querySelector("#provQ");
   q.value = "نجار كريم";
   fire(q, "input");
   const found = [...d.querySelectorAll("#provGrid .prov")].filter(c => !c.classList.contains("hide"));
-  check("search 'نجار كريم' finds the approved worker", found.length === 1 && found[0].dataset.name.includes("نجار كريم"));
+  check("search 'نجار كريم' finds the approved worker", found.length === 1 && found[0].dataset.name.includes("نجار كريم") && !found[0].classList.contains("prov--demo"));
   q.value = ""; fire(q, "input");
 
-  // "المتاح الآن فقط" quick filter → only the real active worker
+  // "المتاح الآن فقط" quick filter → العمال النشط التجريبيين + الحقيقي المعتمد
   d.querySelector("#availChip").click();
   vis = [...d.querySelectorAll("#provGrid .prov")].filter(c => !c.classList.contains("hide"));
-  check('"المتاح الآن فقط" → العامل الحقيقي النشط بس', vis.length === 1 && vis[0].dataset.status === "active");
+  check('"المتاح الآن فقط" → النشط التجريبي + الحقيقي المعتمد', vis.length === activeDemos + 1 && vis.every(c => c.dataset.status === "active"));
   d.querySelector("#availChip").click();
   w.close();
 
