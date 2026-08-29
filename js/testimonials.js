@@ -248,10 +248,19 @@
   build();
   }
 
-  /* نشغّل بعد الانتهاء من تحميل كل السكريبتات عشان ما نتصادمش مع رسم app.js */
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", start);
-  } else {
+  /* نشغّل بعد الانتهاء من تحميل كل السكريبتات عشان ما نتصادمش مع رسم app.js
+     + حماية إضافية (load / timeout) عشان يشتغل في أي بيئة عرض */
+  var started = false;
+  function boot() {
+    if (started) return;
+    started = true;
     start();
+  }
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", boot);
+    window.addEventListener("load", boot);
+    setTimeout(boot, 1200);
+  } else {
+    boot();
   }
 })();
